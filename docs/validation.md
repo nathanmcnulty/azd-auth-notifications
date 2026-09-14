@@ -2,14 +2,27 @@
 
 Initial milestone, 2026-09-13 (Pacific time).
 
-- Local TypeScript checks, runtime bundle, and 15 behavioral tests pass.
-- Runtime dependency audit reports no known vulnerabilities.
-- Bicep compilation and PowerShell parsing pass.
-- Azure provisioning succeeded in the isolated rg-auth-notify-dev dev environment.
-- Cached Graph audit reads confirmed paired successful device-bound passkey/generic registration records; no raw audit payloads were committed.
-- Pilot configuration targets only the signed-in development administrator. Collection remains disabled.
-- Runtime deployment and provider delivery tests are in progress. This file will be updated with results.
+## Passed
 
-Microsoft Graph PowerShell authentication encountered a WAM window-handle error in this host. Teams catalog/installation validation may require an interactive administrator session. No device-code authentication is used.
+- TypeScript checks, runtime bundle, and 20 behavioral tests.
+- Runtime dependency audit: no known vulnerabilities at validation time.
+- Bicep compilation and PowerShell parsing.
+- GitHub Validate and Security hygiene workflows for the initial main milestone.
+- Isolated Azure provisioning and Function deployment in rg-auth-notify-dev.
+- Health endpoint reports ready with collection disabled.
+- Exact managed-identity AuditLog.Read.All and User.Read.All grants.
+- Exchange RBAC: Application Mail.Send allowed for Access-Notifications shared mailbox; a different mailbox was out of scope. No unscoped Entra Mail.Send grant was added.
+- Deployed managed-identity test email: provider accepted the message to the development administrator.
+- Seven-day read-only audit replay: 260 audit records, selecting 26 device-bound passkey registrations and one other registration. Raw payloads were not committed.
 
-No real end-to-end registration receipt or production readiness is claimed.
+The real replay uncovered null target object IDs on canonical passkey records. Resolving their exact target UPN through Graph corrected the detector; fixtures now cover this shape and reject mismatched lookups without using the actor as recipient.
+
+## Open validation
+
+- Actual email receipt awaits the recipient's confirmation.
+- Teams test returned TeamsConversationUnavailable. The generated package has not been installed: Graph PowerShell WAM failed with a missing-window-handle error, and the cached CLI token lacks Teams catalog permission (403).
+- A new end-to-end registration after collection activation has not been tested. Collection remains disabled, with only the development administrator in the pilot list.
+- Separate administrator recipient delivery is fixture-tested; the live pilot used the same person for both audiences and deduplicated that route.
+- Additional authentication-method variants remain unverified with real events.
+
+Provider acceptance and a historical read-only replay are not proof of a new registration reaching the user. This is not a production-ready release.

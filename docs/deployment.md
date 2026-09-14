@@ -50,3 +50,13 @@ The deploy hook builds the package and deploys it with remote build disabled. Va
     azd provision
 
 The first enabled cycle establishes its start boundary. Register a method afterward with a pilot account and verify actual receipt on each chosen channel. Automatic method registration on behalf of a user is not included. Pause by setting COLLECTION_ENABLED=false and reprovisioning.
+
+## Scoped email setup script
+
+After setting EMAIL_SENDER_USER_ID, run scripts/Configure-Exchange.ps1 -AdminUpn <administrator-UPN>. Use -WhatIf for a read-only plan and -OtherMailbox <different-mailbox> to verify that the send scope excludes another mailbox. On hosts where WAM cannot acquire a window handle, -DisableWAM selects normal Exchange browser authentication. The script checks the connected Exchange tenant before changing objects.
+
+## Delivery proof
+
+With collection disabled and an explicit pilot configured, POST to /api/test-delivery with a Function key in the x-functions-key header and JSON body containing userId. Only a configured pilot user is accepted; channels and administrator destinations come from deployment configuration. This creates labeled synthetic delivery records and can send real notifications. It cannot accept arbitrary recipients or run while collection is enabled. Confirm receipt separately from an accepted provider result.
+
+For a read-only audit replay, set AZURE_TENANT_ID and optionally AUDIT_INSPECTION_HOURS (1 through 168), then run npx tsx scripts/Inspect-Audits.ts. Output is aggregate counts; it does not send notifications or store raw audit records.

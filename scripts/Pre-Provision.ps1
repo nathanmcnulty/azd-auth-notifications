@@ -70,6 +70,6 @@ if (($userChannels + ',' + $adminChannels) -match '(^|,)email(,|$)' -and -not (G
 foreach ($name in @('AZURE_TENANT_ID', 'USER_CHANNELS', 'ADMIN_CHANNELS', 'ADMIN_USER_IDS', 'PILOT_USER_IDS', 'ALL_USERS', 'COLLECTION_ENABLED', 'EMAIL_SENDER_USER_ID', 'HELPDESK_TEXT', 'AUDIT_OVERLAP_MINUTES')) {
     [Environment]::SetEnvironmentVariable($name, (Get-EnvironmentValue $name), 'Process')
 }
-& node --import tsx --input-type=module --eval "import { parseConfig } from './src/core.ts'; parseConfig(process.env);" 
+& node --import tsx --input-type=module --eval "import { parseConfig } from './src/core.ts'; parseConfig(process.env);"
 if ($LASTEXITCODE -ne 0) { throw 'Runtime configuration validation failed.' }
-Write-Host "Configuration validated for tenant $tenantId and subscription $subscriptionId. Collection remains paused."
+Write-Host "Configuration validated for tenant $tenantId and subscription $subscriptionId. COLLECTION_ENABLED=$env:COLLECTION_ENABLED."

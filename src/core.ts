@@ -73,7 +73,10 @@ function isUuid(value: string | undefined): value is string {
 }
 
 function canonicalMethod(value: string): string {
-  return METHOD_LABELS.get(value.trim().toLocaleLowerCase()) ?? "Authentication method";
+  return (
+    METHOD_LABELS.get(value.trim().toLocaleLowerCase()) ??
+    "Authentication method"
+  );
 }
 
 function authenticationMethod(details: unknown): string | undefined {
@@ -83,7 +86,10 @@ function authenticationMethod(details: unknown): string | undefined {
 
   for (const detail of details) {
     const item = record(detail);
-    if (item && text(item.key)?.toLocaleLowerCase() === "authenticationmethod") {
+    if (
+      item &&
+      text(item.key)?.toLocaleLowerCase() === "authenticationmethod"
+    ) {
       return text(item.value);
     }
   }
@@ -121,7 +127,9 @@ export function normalizeAudit(audit: any): Registration | undefined {
     return undefined;
   }
 
-  const activity = text(event.activityDisplayName ?? event.operationName)?.toLocaleLowerCase();
+  const activity = text(
+    event.activityDisplayName ?? event.operationName,
+  )?.toLocaleLowerCase();
   let method: string | undefined;
   if (activity === "add passkey (device-bound)") {
     method = "Passkey (device-bound)";
@@ -145,7 +153,11 @@ export function normalizeAudit(audit: any): Registration | undefined {
   };
 }
 
-function parseBoolean(value: string | undefined, name: string, defaultValue: boolean): boolean {
+function parseBoolean(
+  value: string | undefined,
+  name: string,
+  defaultValue: boolean,
+): boolean {
   if (value === undefined || value.trim() === "") {
     return defaultValue;
   }
@@ -159,7 +171,11 @@ function parseBoolean(value: string | undefined, name: string, defaultValue: boo
   throw new Error(`${name} must be true or false.`);
 }
 
-function parseUuid(value: string | undefined, name: string, required = true): string | undefined {
+function parseUuid(
+  value: string | undefined,
+  name: string,
+  required = true,
+): string | undefined {
   const normalized = text(value);
   if (!normalized) {
     if (required) {
@@ -199,7 +215,9 @@ function parseChannels(
     }
     throw new Error(`${name} must include at least one channel.`);
   }
-  const values = value.split(",").map((item) => item.trim().toLocaleLowerCase());
+  const values = value
+    .split(",")
+    .map((item) => item.trim().toLocaleLowerCase());
   if (values.some((item) => item !== "email" && item !== "teams")) {
     throw new Error(`${name} supports only email and teams.`);
   }
@@ -212,7 +230,9 @@ function parseHelpdeskText(value: string | undefined): string {
   }
   const normalized = value.trim();
   if (normalized.length > 500 || /[<>\u0000-\u001f\u007f]/.test(normalized)) {
-    throw new Error("HELPDESK_TEXT must be plain text of at most 500 characters.");
+    throw new Error(
+      "HELPDESK_TEXT must be plain text of at most 500 characters.",
+    );
   }
   return normalized;
 }
@@ -232,10 +252,21 @@ function parseOverlapMinutes(value: string | undefined): number {
 }
 
 export function parseConfig(env: NodeJS.ProcessEnv): Config {
-  const enabled = parseBoolean(env.COLLECTION_ENABLED, "COLLECTION_ENABLED", false);
+  const enabled = parseBoolean(
+    env.COLLECTION_ENABLED,
+    "COLLECTION_ENABLED",
+    false,
+  );
   const tenantId = parseUuid(env.AZURE_TENANT_ID, "AZURE_TENANT_ID")!;
-  const userChannels = parseChannels(env.USER_CHANNELS, "USER_CHANNELS", ["email"]);
-  const adminChannels = parseChannels(env.ADMIN_CHANNELS, "ADMIN_CHANNELS", [], true);
+  const userChannels = parseChannels(env.USER_CHANNELS, "USER_CHANNELS", [
+    "email",
+  ]);
+  const adminChannels = parseChannels(
+    env.ADMIN_CHANNELS,
+    "ADMIN_CHANNELS",
+    [],
+    true,
+  );
   const adminUserIds = parseUuidList(env.ADMIN_USER_IDS, "ADMIN_USER_IDS");
   const pilotUserIds = parseUuidList(env.PILOT_USER_IDS, "PILOT_USER_IDS");
   const allUsers = parseBoolean(env.ALL_USERS, "ALL_USERS", false);
@@ -244,14 +275,23 @@ export function parseConfig(env: NodeJS.ProcessEnv): Config {
     throw new Error("USER_CHANNELS must include at least one channel.");
   }
   if ((adminChannels.length === 0) !== (adminUserIds.length === 0)) {
-    throw new Error("ADMIN_CHANNELS and ADMIN_USER_IDS must be configured together.");
+    throw new Error(
+      "ADMIN_CHANNELS and ADMIN_USER_IDS must be configured together.",
+    );
   }
   if (enabled && !allUsers && pilotUserIds.length === 0) {
-    throw new Error("PILOT_USER_IDS is required when COLLECTION_ENABLED is true and ALL_USERS is not true.");
+    throw new Error(
+      "PILOT_USER_IDS is required when COLLECTION_ENABLED is true and ALL_USERS is not true.",
+    );
   }
 
-  const usesEmail = userChannels.includes("email") || adminChannels.includes("email");
-  const senderUserId = parseUuid(env.EMAIL_SENDER_USER_ID, "EMAIL_SENDER_USER_ID", usesEmail);
+  const usesEmail =
+    userChannels.includes("email") || adminChannels.includes("email");
+  const senderUserId = parseUuid(
+    env.EMAIL_SENDER_USER_ID,
+    "EMAIL_SENDER_USER_ID",
+    usesEmail,
+  );
 
   return {
     enabled,
@@ -267,8 +307,14 @@ export function parseConfig(env: NodeJS.ProcessEnv): Config {
   };
 }
 
-export function planDeliveries(registration: Registration, config: Config): Delivery[] {
-  if (!config.enabled || (!config.allUsers && !config.pilotUserIds.includes(registration.userId))) {
+export function planDeliveries(
+  registration: Registration,
+  config: Config,
+): Delivery[] {
+  if (
+    !config.enabled ||
+    (!config.allUsers && !config.pilotUserIds.includes(registration.userId))
+  ) {
     return [];
   }
 
@@ -308,15 +354,21 @@ function escapeHtml(value: string): string {
 }
 
 function utcTime(occurredAt: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    dateStyle: "medium",
-    timeStyle: "medium",
-    timeZone: "UTC",
-    hourCycle: "h23",
-  }).format(new Date(occurredAt)) + " UTC";
+  return (
+    new Intl.DateTimeFormat("en-CA", {
+      dateStyle: "medium",
+      timeStyle: "medium",
+      timeZone: "UTC",
+      hourCycle: "h23",
+    }).format(new Date(occurredAt)) + " UTC"
+  );
 }
 
-export function renderNotification(registration: Registration, audience: Audience, helpdeskText: string): Notification {
+export function renderNotification(
+  registration: Registration,
+  audience: Audience,
+  helpdeskText: string,
+): Notification {
   const method = escapeHtml(registration.method);
   const time = escapeHtml(utcTime(registration.occurredAt));
   const userId = escapeHtml(registration.userId);
@@ -328,8 +380,12 @@ export function renderNotification(registration: Registration, audience: Audienc
   const lead = isAdmin
     ? "An authentication method was registered for a user."
     : "A new authentication method was registered for your account.";
-  const affectedUser = isAdmin ? `\n\nAffected user ID: ${registration.userId}` : "";
-  const htmlAffectedUser = isAdmin ? `<p><strong>Affected user ID:</strong> ${userId}</p>` : "";
+  const affectedUser = isAdmin
+    ? `\n\nAffected user ID: ${registration.userId}`
+    : "";
+  const htmlAffectedUser = isAdmin
+    ? `<p><strong>Affected user ID:</strong> ${userId}</p>`
+    : "";
   const nextStep = isAdmin
     ? "Use the affected user ID to investigate this registration."
     : `Review your security information: ${SECURITY_INFO_URL}`;
@@ -338,7 +394,13 @@ export function renderNotification(registration: Registration, audience: Audienc
     : `<p><a href="${SECURITY_INFO_URL}">Review your security information</a></p>`;
   const actions = isAdmin
     ? []
-    : [{ type: "Action.OpenUrl", title: "Review security information", url: SECURITY_INFO_URL }];
+    : [
+        {
+          type: "Action.OpenUrl",
+          title: "Review security information",
+          url: SECURITY_INFO_URL,
+        },
+      ];
 
   return {
     subject,
@@ -350,12 +412,21 @@ export function renderNotification(registration: Registration, audience: Audienc
       version: "1.5",
       body: [
         { type: "TextBlock", text: lead, wrap: true },
-        { type: "FactSet", facts: [
-          { title: "Method", value: registration.method },
-          { title: "Time", value: utcTime(registration.occurredAt) },
-          ...(isAdmin ? [{ title: "Affected user ID", value: registration.userId }] : []),
-        ] },
-        { type: "TextBlock", text: `If you did not expect this registration, ${helpdeskText}`, wrap: true },
+        {
+          type: "FactSet",
+          facts: [
+            { title: "Method", value: registration.method },
+            { title: "Time", value: utcTime(registration.occurredAt) },
+            ...(isAdmin
+              ? [{ title: "Affected user ID", value: registration.userId }]
+              : []),
+          ],
+        },
+        {
+          type: "TextBlock",
+          text: `If you did not expect this registration, ${helpdeskText}`,
+          wrap: true,
+        },
       ],
       actions,
     },
