@@ -1,23 +1,39 @@
-# Authentication security notifications for Microsoft Entra
+# Authentication-method registration notifications
 
-`azd-auth-notifications` is a private work-in-progress repository for an administrator-focused notification service covering authentication-method changes and security-relevant sign-ins.
+Notify affected users when a new Microsoft Entra authentication method is registered. Deploying administrators select **email, personal Teams messages, or both**, independently for end users and optional administrators.
 
 ## Status
 
-This repository is a design placeholder. It does not yet contain an `azure.yaml`, Azure infrastructure, deployment hooks, or a supported notification service. **Do not run `azd init` or treat this repository as deployable.**
+Initial implementation under dev-tenant validation; not a production-validated release. Azure Communication Services is on the [roadmap](docs/roadmap.md) for both audiences.
 
-The first deployable milestone is intended to:
+## Behavior
 
-- detect a passkey or other authentication-method registration;
-- detect a new or security-relevant sign-in;
-- send a deduplicated Microsoft Teams notification, with email optional;
-- use managed identity and supported Microsoft Graph, Azure Monitor, or Microsoft Sentinel interfaces;
-- default to observation only, with no automatic identity remediation.
+A Node.js Azure Function polls Graph audit logs every five minutes and persists per-recipient delivery records in Azure Tables. Managed identity sends email through Graph or personal messages through Azure Bot Service. No Sentinel or existing log ingestion is required.
 
-## Administrator safety goals
+- End-user channels: email, teams, or both.
+- Optional admin channels: independent selection and recipient object IDs.
+- Recipients come from the affected directory user, never the audit actor or newly registered method.
+- Email resolves an existing organizational mailbox; guests and missing mailboxes are rejected.
+- Teams requires the personal bot installed for every recipient.
+- A pilot allowlist is the default. Broad scope requires ALL_USERS=true.
+- Collection starts disabled. First activation does not notify historical registrations.
+- If the affected user is an administrator, the same channel receives one user notification.
 
-The future template must document required licensing, permissions, consent, data retention, operating cost, and cleanup before deployment. Preview interfaces must be optional and clearly identified. Remediation, privileged-user handling, and tenant cleanup must require explicit approval and must not be inferred from matching display names.
+## Development
 
-## Development plan
+Requires Node.js 22+, PowerShell 7, Azure CLI, Azure Developer CLI, and Bicep via Azure CLI.
 
-The current product direction and initial implementation requirements are in [STARTING-PROMPT.md](STARTING-PROMPT.md). The repository will receive an administrator quickstart only after a complete template can be initialized and validated end to end.
+    npm ci
+    npm test
+    npm run build
+    az bicep build --file infra/main.bicep
+
+See [deployment](docs/deployment.md), [operations](docs/operations.md), and [validation](docs/validation.md).
+
+## Detection
+
+Accepts successful Add Passkey (device-bound) and User registered security info records with method details. Generic Passkey events are excluded because the dev tenant emits paired passkey-specific events. Unknown method names use a generic label without copying arbitrary audit content. Starts, failures, updates, deletions, and administrator-created methods are excluded.
+
+Adapted from the author's [MFA design](https://github.com/nathanmcnulty/nathanmcnulty/tree/main/Entra/passkeys/notifications) and [device-notifications](https://github.com/nathanmcnulty/azd-device-notifications) patterns.
+
+Interfaces: [Graph audits](https://learn.microsoft.com/en-us/graph/api/directoryaudit-list), [Teams proactive messaging](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/send-proactive-messages), [Exchange application RBAC](https://learn.microsoft.com/en-us/exchange/permissions-exo/application-rbac).

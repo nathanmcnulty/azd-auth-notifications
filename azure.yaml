@@ -1,0 +1,19 @@
+name: azd-auth-notifications
+metadata:
+  template: azd-auth-notifications@0.1.0
+requiredVersions:
+  azd: ">= 1.23.0"
+infra:
+  provider: bicep
+  path: infra
+hooks:
+  preprovision:
+    shell: pwsh
+    run: ./scripts/Pre-Provision.ps1
+    interactive: true
+    continueOnError: false
+  predeploy:
+    shell: pwsh
+    run: ./scripts/Deploy-FunctionPackage.ps1
+    interactive: false
+    continueOnError: false

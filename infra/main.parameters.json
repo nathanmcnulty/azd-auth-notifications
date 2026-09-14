@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": { "value": "${AZURE_ENV_NAME}" },
+    "location": { "value": "${AZURE_LOCATION}" },
+    "tenantId": { "value": "${AZURE_TENANT_ID}" },
+    "userChannels": { "value": "${USER_CHANNELS}" },
+    "adminChannels": { "value": "${ADMIN_CHANNELS}" },
+    "adminUserIds": { "value": "${ADMIN_USER_IDS=}" },
+    "pilotUserIds": { "value": "${PILOT_USER_IDS=}" },
+    "allUsers": { "value": "${ALL_USERS=false}" },
+    "collectionEnabled": { "value": "${COLLECTION_ENABLED=false}" },
+    "emailSenderUserId": { "value": "${EMAIL_SENDER_USER_ID=}" },
+    "helpdeskText": { "value": "${HELPDESK_TEXT=}" },
+    "auditOverlapMinutes": { "value": "${AUDIT_OVERLAP_MINUTES=60}" }
+  }
+}
