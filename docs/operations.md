@@ -29,3 +29,5 @@ Disable collection first. Record exact managed-identity and Teams catalog/instal
 ## Evidence boundary
 
 Dev-tenant audit inspection confirmed paired device-bound passkey events. Other methods remain fixture-tested until real registrations are observed. See validation.md. Provider acceptance alone is not end-to-end readiness.
+
+Canonical passkey events may omit the affected object ID. For these records only, the reader resolves the target UPN through Graph and requires the returned UPN to match before binding to its object ID. It never uses the initiating actor as a recipient fallback. A deleted or renamed target that no longer resolves is skipped; current directory lookup cannot reconstruct historical UPN ownership. Keep the collection overlap short and review identity lifecycle edge cases before production.
