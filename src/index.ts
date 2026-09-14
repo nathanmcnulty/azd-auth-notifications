@@ -94,6 +94,9 @@ app.http("testDelivery", {
         : undefined;
     if (!userId || !config.pilotUserIds.includes(userId))
       return { status: 403, jsonBody: { code: "TestDeliveryUserNotPilot" } };
+    const channel = (body as { channel?: unknown }).channel;
+    if (channel !== undefined && channel !== "email" && channel !== "teams")
+      return { status: 400, jsonBody: { code: "TestDeliveryInvalidChannel" } };
     const registration: Registration = {
       id: randomUUID(),
       userId,
@@ -101,9 +104,16 @@ app.http("testDelivery", {
       method: "Test authentication method",
     };
     const effectiveConfig = { ...config, enabled: true, allUsers: false };
-    const jobs = planDeliveries(registration, effectiveConfig).map(
-      (delivery) => ({ ...delivery, registration, status: "pending" }),
-    );
+    const jobs = planDeliveries(registration, effectiveConfig)
+      .filter(
+        (delivery) => channel === undefined || delivery.channel === channel,
+      )
+      .map((delivery) => ({ ...delivery, registration, status: "pending" }));
+    if (jobs.length === 0)
+      return {
+        status: 400,
+        jsonBody: { code: "TestDeliveryChannelNotConfigured" },
+      };
     await state.init();
     for (const job of jobs) await state.add(job);
     const outcomes: DispatchOutcome[] = [];
