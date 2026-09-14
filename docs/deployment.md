@@ -35,7 +35,24 @@ From a normal Connect-ExchangeOnline session, create the Exchange service-princi
 
 ## Teams
 
-Generate the personal app package with scripts/New-TeamsAppPackage.ps1 (Get-Help shows required parameters). Publish it in your tenant app catalog and install it personally for each pilot/admin recipient. The bot must receive the installation event before delivery works. Runtime identity is not granted catalog or installation permissions.
+Generate the personal package, then publish/install it for an explicit pilot:
+
+    ./scripts/New-TeamsAppPackage.ps1
+    ./scripts/Install-TeamsApp.ps1 -AdminUpn <admin-UPN> -UserId <pilot-object-id>
+
+The installer checks the deployed identity, personal-scope manifest, published version, and recorded catalog ID. It refuses silent package updates or replacement of a missing recorded app. Use -WhatIf for a plan. If normal Graph PowerShell WAM fails with a missing window handle, -UseCachedWam tries the selected administrator's existing broker session without opening a device-code flow. Missing cache/consent remains an authentication blocker.
+
+Teams availability is a separate administration step. When installation returns App is blocked by app permission policy, use Teams admin center or Teams PowerShell to allow this app for the pilot. In Teams PowerShell, Get-M365TeamsApp requires the **catalog ID** saved as TEAMS_CATALOG_APP_ID, not the manifest/bot client ID:
+
+    Connect-MicrosoftTeams -TenantId <tenant-id> -AccountId <admin-UPN>
+    Get-M365TeamsApp -Id <catalog-id>
+    Update-M365TeamsApp -Id <catalog-id> -AppAssignmentType UsersAndGroups -OperationType Add -Users <pilot-object-id>
+
+Teams PowerShell also supports -DisableWAM for normal browser authentication when required by the host. Verify the connected tenant before changes. A newly published app can be visible in app management while Graph catalog queries do not yet return it; wait for availability propagation and retry the same recorded app instead of creating another one.
+
+If a send returns TeamsHttp403_BotDisabledByAdmin, verify the app is unblocked and available to the recipient. [Microsoft documents up to 24 hours for availability changes](https://learn.microsoft.com/en-us/microsoftteams/app-centric-management). An installed app alone does not prove sending is permitted; do not broaden tenant policy just to work around propagation.
+
+The bot must receive the personal installation event before delivery works. Runtime identity is not granted catalog or installation permissions. The current installer deliberately limits automatic installation to configured PILOT_USER_IDS; additional administrator recipients need personal installation through your normal Teams administration process.
 
 The package requires valid public developer/privacy/terms URLs supplied by the administrator. Personal Teams messages are supported; Teams channel webhooks are not part of this milestone.
 
@@ -57,6 +74,8 @@ After setting EMAIL_SENDER_USER_ID, run scripts/Configure-Exchange.ps1 -AdminUpn
 
 ## Delivery proof
 
-With collection disabled and an explicit pilot configured, POST to /api/test-delivery with a Function key in the x-functions-key header and JSON body containing userId. Only a configured pilot user is accepted; channels and administrator destinations come from deployment configuration. This creates labeled synthetic delivery records and can send real notifications. It cannot accept arbitrary recipients or run while collection is enabled. Confirm receipt separately from an accepted provider result.
+With collection disabled and an explicit pilot configured, run scripts/Test-NotificationDelivery.ps1 -UserId <pilot-object-id>. Add -Channel teams or -Channel email to test only configured routes for that channel, -HealthOnly to check readiness without sending, or -WhatIf to preview the send. Channel selection filters both user and administrator routes; inspect the returned recipient IDs to establish which audience was tested. The command checks the Azure target and keeps the Function key in memory. It fails if any selected route is not accepted.
+
+For direct API use, POST to /api/test-delivery with a Function key in the x-functions-key header and JSON body containing userId. Only a configured pilot user is accepted; channels and administrator destinations come from deployment configuration. This creates labeled synthetic delivery records and can send real notifications. It cannot accept arbitrary recipients or run while collection is enabled. Confirm receipt separately from an accepted provider result.
 
 For a read-only audit replay, set AZURE_TENANT_ID and optionally AUDIT_INSPECTION_HOURS (1 through 168), then run npx tsx scripts/Inspect-Audits.ts. Output is aggregate counts; it does not send notifications or store raw audit records.

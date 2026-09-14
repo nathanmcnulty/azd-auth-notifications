@@ -15,6 +15,46 @@ interface Logger {
 }
 class PermanentDeliveryError extends Error {}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SAFE_ERROR_CODE = /^[A-Za-z][A-Za-z0-9._-]{0,64}$/;
+
+function record(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function safeCode(value: unknown): string | undefined {
+  return typeof value === "string" && SAFE_ERROR_CODE.test(value)
+    ? value
+    : undefined;
+}
+
+function safeStatus(value: unknown): number | undefined {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 100 &&
+    value <= 599
+    ? value
+    : undefined;
+}
+
+function errorType(error: unknown): string {
+  return safeCode(record(error)?.name) ?? "UnknownError";
+}
+
+export function classifyBotError(error: unknown): string {
+  const source = record(error);
+  const bodyError = record(record(source?.body)?.error);
+  const code = safeCode(source?.code) ?? safeCode(bodyError?.code);
+  const status = safeStatus(source?.statusCode) ?? safeStatus(source?.status);
+  if (status !== undefined && code !== undefined)
+    return `TeamsHttp${status}_${code}`;
+  if (status !== undefined) return `TeamsHttp${status}`;
+  if (code !== undefined) return `Teams${code}`;
+  const name = safeCode(source?.name);
+  return name ? `Teams${name}` : "TeamsBotTurnFailure";
+}
+
 function normalizedUuid(value: string | undefined): string | undefined {
   return value && UUID.test(value) ? value.toLowerCase() : undefined;
 }
@@ -59,11 +99,13 @@ export class ManagedIdentityTeamsBot {
       MicrosoftAppTenantId: tenantId,
     });
     this.adapter = new CloudAdapter(authentication);
-    this.adapter.onTurnError = async () => {
+    this.adapter.onTurnError = async (_context, error) => {
+      const code = classifyBotError(error);
       this.logger.error("Teams bot turn failed", {
-        code: "TeamsBotTurnFailure",
+        code,
+        type: errorType(error),
       });
-      throw new Error("TeamsBotTurnFailure");
+      throw new Error(code);
     };
   }
 
