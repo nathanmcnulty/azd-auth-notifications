@@ -4,16 +4,19 @@ param(
     [Parameter(Mandatory)][guid] $UserId,
     [string] $PackagePath = (Join-Path (Split-Path $PSScriptRoot -Parent) 'teams-app/auth-notifications.zip'),
     [switch] $UseCachedWam,
-    [switch] $AdoptExisting
+    [switch] $AdoptExisting,
+    [switch] $UpdateExisting
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 function Get-Env([string]$Name, [switch]$Required) {
     $v = (& azd env get-value $Name 2>$null | Out-String).Trim()
-    if ($Required -and (-not $v -or $LASTEXITCODE -ne 0)) {
+    $missing = $LASTEXITCODE -ne 0 -or $v -match '^ERROR: key not found in environment values:'
+    if ($Required -and ($missing -or -not $v)) {
         throw "$Name is required from the initialized azd environment."
     }
+    if ($missing) { return '' }
     $v
 }
 function Set-Env([string]$Name, [string]$Value) {
@@ -46,6 +49,22 @@ function Get-TokenTenant([string]$Token) {
     }
     ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b)) | ConvertFrom-Json).tid
 }
+function Get-CanonicalPackageHash([string]$Path) {
+    $archive = [IO.Compression.ZipFile]::OpenRead($Path)
+    try {
+        $entries = foreach ($entry in $archive.Entries | Where-Object { -not $_.FullName.EndsWith('/') }) {
+            $stream = $entry.Open()
+            try {
+                $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($stream)).ToLowerInvariant()
+            }
+            finally { $stream.Dispose() }
+            "$($entry.FullName.Replace('\', '/'))`0$hash"
+        }
+        $bytes = [Text.Encoding]::UTF8.GetBytes((@($entries | Sort-Object) -join "`n"))
+        [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()
+    }
+    finally { $archive.Dispose() }
+}
 
 foreach ($command in @('azd', 'az')) {
     if (-not(Get-Command $command -ErrorAction SilentlyContinue)) {
@@ -74,6 +93,7 @@ if (-not $functionHost -or ([uri]$functionUrl).Scheme -ne 'https') {
     throw 'AZURE_FUNCTION_APP_URL must be HTTPS.'
 }
 $package = (Resolve-Path -LiteralPath $PackagePath -ErrorAction Stop).Path
+$packageHash = Get-CanonicalPackageHash $package
 $archive = [IO.Compression.ZipFile]::OpenRead($package)
 try {
     $entry = $archive.GetEntry('manifest.json')
@@ -166,9 +186,43 @@ function Get-Paged([string]$Uri) {
     }while ($Uri)
     @($items)
 }
+function Set-PackageReceipt {
+    Set-Env TEAMS_PACKAGE_VERSION ([string]$manifest.version)
+    Set-Env TEAMS_PACKAGE_SHA256 $packageHash
+    Set-Env TEAMS_PACKAGE_HASH_FORMAT 'canonical-content-v1'
+}
+function Set-InstallationReceipt([object]$Installation, [string]$Ownership) {
+    Set-Env TEAMS_INSTALLATION_ID ([string]$Installation.id)
+    Set-Env TEAMS_INSTALLATION_USER_ID $UserId.Guid
+    Set-Env TEAMS_INSTALL_OWNERSHIP $Ownership
+}
+function Get-CatalogDefinitions([string]$CatalogId) {
+    @(Get-Paged "https://graph.microsoft.com/v1.0/appCatalogs/teamsApps/$CatalogId/appDefinitions")
+}
+function Wait-CatalogDefinition([string]$CatalogId, [string]$Version) {
+    for ($attempt = 1; $attempt -le 18; $attempt++) {
+        try {
+            $definition = @(Get-CatalogDefinitions $CatalogId | Where-Object {
+                    [string]$_.version -ceq $Version -and [string]$_.publishingState -ceq 'published'
+                }) | Select-Object -First 1
+            if ($definition) { return $definition }
+        }
+        catch {
+            if ($attempt -eq 18) { throw 'The Teams catalog definition could not be read after waiting for propagation.' }
+        }
+        Start-Sleep -Seconds 5
+    }
+    throw "Teams catalog app version '$Version' was not visible as published after waiting for propagation."
+}
 
 $catalogApp = $null
+$catalogWasCreated = $false
 $recorded = Get-Env TEAMS_CATALOG_APP_ID
+$catalogOwnership = Get-Env TEAMS_CATALOG_OWNERSHIP
+$recordedPackageHash = Get-Env TEAMS_PACKAGE_SHA256
+if ($recorded -and $catalogOwnership -and $catalogOwnership -notin @('created', 'adopted')) {
+    throw 'Recorded Teams catalog ownership state is invalid.'
+}
 # Installed definitions are authoritative for a rerun even while catalog replicas lag.
 if ($recorded) {
     $installedUri = "https://graph.microsoft.com/v1.0/users/$($UserId.Guid)/teamwork/installedApps?`$expand=teamsApp,teamsAppDefinition"
@@ -181,9 +235,31 @@ if ($recorded) {
             [string]$existing.teamsAppDefinition.publishingState -cne 'published') {
             throw 'Installed app identity or published version differs from this package.'
         }
+        if ($recordedPackageHash -and $recordedPackageHash -cne $packageHash) {
+            throw 'The Teams package bytes differ from the recorded deployment; increment the manifest version before updating.'
+        }
+        if (-not $catalogOwnership) {
+            if (-not $AdoptExisting) {
+                throw 'The recorded Teams app predates ownership receipts. Rerun with -AdoptExisting after verifying that it belongs to this deployment.'
+            }
+            if ($PSCmdlet.ShouldProcess($recorded, 'Adopt the recorded Teams catalog app and write ownership receipts')) {
+                Set-Env TEAMS_CATALOG_OWNERSHIP 'adopted'
+                Set-PackageReceipt
+            }
+        }
+        elseif (-not $recordedPackageHash -and $PSCmdlet.ShouldProcess($recorded, 'Record the verified Teams package provenance')) {
+            Set-PackageReceipt
+        }
         if ($PSCmdlet.ShouldProcess($UserId.Guid, 'Record verified existing Teams installation')) {
-            Set-Env TEAMS_INSTALLATION_ID ([string]$existing.id)
-            Set-Env TEAMS_INSTALLATION_USER_ID $UserId.Guid
+            $existingOwnership = Get-Env TEAMS_INSTALL_OWNERSHIP
+            if ($existingOwnership -notin @('created', 'adopted')) {
+                if (-not $AdoptExisting) {
+                    throw 'The Teams app is already installed without a matching creation receipt. Rerun with -AdoptExisting after verifying the installation.'
+                }
+                $existingOwnership = 'adopted'
+            }
+            Set-InstallationReceipt $existing $existingOwnership
+            Set-Env TEAMS_CATALOG_UPDATE_STATUS 'complete'
         }
         Write-Host "Verified existing personal Teams installation for $UserId."
         return
@@ -204,12 +280,18 @@ if (-not $catalogApp) {
     if (-not $PSCmdlet.ShouldProcess($clientId, 'Publish Teams package')) {
         return
     }
+    Set-Env TEAMS_PACKAGE_VERSION ([string]$manifest.version)
+    Set-Env TEAMS_PACKAGE_SHA256 $packageHash
+    Set-Env TEAMS_PACKAGE_HASH_FORMAT 'canonical-content-v1'
+    Set-Env TEAMS_CATALOG_OWNERSHIP 'create-pending'
     $catalogApp = Invoke-Graph POST 'https://graph.microsoft.com/v1.0/appCatalogs/teamsApps' $null $package
     if (-not $catalogApp.id) {
         throw 'Catalog publish returned no ID.'
     }
+    $catalogWasCreated = $true
     if ($PSCmdlet.ShouldProcess([string]$catalogApp.id, 'Checkpoint catalog ID in local azd state')) {
         Set-Env TEAMS_CATALOG_APP_ID ([string]$catalogApp.id)
+        Set-Env TEAMS_CATALOG_OWNERSHIP 'created'
     }
 }
 elseif ($recorded -and $recorded -cne $catalogApp.id) {
@@ -226,13 +308,52 @@ elseif (-not $recorded) {
         return
     }
     Set-Env TEAMS_CATALOG_APP_ID ([string]$catalogApp.id)
+    Set-Env TEAMS_CATALOG_OWNERSHIP 'adopted'
+    Set-PackageReceipt
+    $catalogOwnership = 'adopted'
+}
+if ($recorded -and -not $catalogOwnership) {
+    if (-not $AdoptExisting) {
+        throw 'The recorded Teams catalog app predates ownership receipts. Rerun with -AdoptExisting after verifying that it belongs to this deployment.'
+    }
+    if ($PSCmdlet.ShouldProcess([string]$catalogApp.id, 'Adopt the recorded Teams catalog app and write ownership receipts')) {
+        Set-Env TEAMS_CATALOG_OWNERSHIP 'adopted'
+        Set-PackageReceipt
+        $catalogOwnership = 'adopted'
+    }
 }
 if ([string]$catalogApp.externalId -cne $clientId -or [string]$catalogApp.distributionMethod -cne 'organization') {
     throw 'Catalog app identity is not the expected organization app.'
 }
-$definitions = @(Get-Paged "https://graph.microsoft.com/v1.0/appCatalogs/teamsApps/$($catalogApp.id)/appDefinitions" | Where-Object { [string]$_.version -ceq [string]$manifest.version -and [string]$_.publishingState -ceq 'published' })
+$recordedPackageHash = Get-Env TEAMS_PACKAGE_SHA256
+if ($recordedPackageHash -and $recordedPackageHash -cne $packageHash -and (Get-Env TEAMS_PACKAGE_VERSION) -ceq [string]$manifest.version) {
+    throw 'The Teams package bytes differ from the recorded deployment; increment the manifest version before updating.'
+}
+$allDefinitions = @(Get-CatalogDefinitions ([string]$catalogApp.id))
+$newerDefinitions = @($allDefinitions | Where-Object {
+        [string]$_.version -match '^\d+\.\d+\.\d+$' -and [version]$_.version -gt [version]$manifest.version
+    })
+if ($newerDefinitions.Count -gt 0) {
+    throw "The Teams catalog contains newer version '$($newerDefinitions[0].version)'; refusing to install or downgrade to '$($manifest.version)'."
+}
+$definitions = @($allDefinitions | Where-Object { [string]$_.version -ceq [string]$manifest.version -and [string]$_.publishingState -ceq 'published' })
+if ($definitions.Count -eq 0) {
+    if (-not $UpdateExisting -and $catalogOwnership -eq 'adopted') {
+        throw 'Updating an adopted Teams catalog app requires -UpdateExisting after verifying the new package and version.'
+    }
+    if (-not $UpdateExisting -and $catalogOwnership -eq 'created' -and -not $catalogWasCreated) {
+        throw 'The catalog does not contain the package version in published state; rerun with -UpdateExisting only after reviewing the package version.'
+    }
+    if (-not $PSCmdlet.ShouldProcess([string]$catalogApp.id, 'Publish a new Teams catalog app definition')) {
+        return
+    }
+    Set-PackageReceipt
+    Set-Env TEAMS_CATALOG_UPDATE_STATUS 'update-pending'
+    [void](Invoke-Graph POST "https://graph.microsoft.com/v1.0/appCatalogs/teamsApps/$($catalogApp.id)/appDefinitions" $null $package)
+    $definitions = @(Wait-CatalogDefinition ([string]$catalogApp.id) ([string]$manifest.version))
+}
 if ($definitions.Count -ne 1) {
-    throw 'The catalog does not contain the package version in published state; silent updates are not supported.'
+    throw 'The catalog does not contain exactly one published package definition for this version.'
 }
 $installUri = "https://graph.microsoft.com/v1.0/users/$($UserId.Guid)/teamwork/installedApps?`$expand=teamsApp"
 $installs = @(Get-Paged $installUri | Where-Object { [string]$_.teamsApp.externalId -ceq $clientId })
@@ -243,14 +364,50 @@ if ($installs.Count -eq 0) {
     if (-not $PSCmdlet.ShouldProcess($UserId.Guid, 'Install Teams app in personal scope')) {
         return
     }
-    [void](Invoke-Graph POST "https://graph.microsoft.com/v1.0/users/$($UserId.Guid)/teamwork/installedApps" @{'teamsApp@odata.bind' = "https://graph.microsoft.com/v1.0/appCatalogs/teamsApps/$($catalogApp.id)" } $null)
+    Set-Env TEAMS_INSTALL_OWNERSHIP 'create-pending'
+    $body = @{'teamsApp@odata.bind' = "https://graph.microsoft.com/v1.0/appCatalogs/teamsApps/$($catalogApp.id)" }
+    $installSubmitted = $false
+    for ($attempt = 1; $attempt -le 18 -and -not $installSubmitted; $attempt++) {
+        try {
+            [void](Invoke-Graph POST "https://graph.microsoft.com/v1.0/users/$($UserId.Guid)/teamwork/installedApps" $body $null)
+            $installSubmitted = $true
+        }
+        catch {
+            $message = $_.Exception.Message
+            if ($message -match '\b409\b|Conflict|already installed') {
+                $installSubmitted = $true
+                continue
+            }
+            if ($message -notmatch 'blocked by app permission policy|app is blocked|not allowed.*app') { throw }
+            if ($attempt -eq 18) {
+                throw 'Teams policy still blocks this personal installation. Make the app available to the exact pilot user, wait for policy propagation, and rerun this command.'
+            }
+            Write-Host "Waiting for administrator-owned Teams app policy to propagate (attempt $attempt of 18)..."
+            Start-Sleep -Seconds 10
+        }
+    }
+    if (-not $installSubmitted) { throw 'The personal Teams app installation request was not accepted.' }
     $installs = @(Get-Paged $installUri | Where-Object { [string]$_.teamsApp.externalId -ceq $clientId })
     if ($installs.Count -ne 1) {
-        throw 'Personal installation was not visible after submission.'
+        for ($attempt = 1; $attempt -le 12 -and $installs.Count -eq 0; $attempt++) {
+            Start-Sleep -Seconds 5
+            $installs = @(Get-Paged $installUri | Where-Object { [string]$_.teamsApp.externalId -ceq $clientId })
+        }
+    }
+    if ($installs.Count -ne 1) {
+        throw 'Personal installation was not visible after waiting for propagation.'
     }
 }
 if ($PSCmdlet.ShouldProcess($UserId.Guid, 'Record Teams installation in local azd state')) {
-    Set-Env TEAMS_INSTALLATION_ID ([string]$installs[0].id)
-    Set-Env TEAMS_INSTALLATION_USER_ID $UserId.Guid
+    $installationOwnership = Get-Env TEAMS_INSTALL_OWNERSHIP
+    if ($installationOwnership -eq 'create-pending') { $installationOwnership = 'created' }
+    if (-not $installationOwnership) {
+        if (-not $AdoptExisting) {
+            throw 'The Teams app is already installed without a matching creation receipt. Rerun with -AdoptExisting after verifying the installation.'
+        }
+        $installationOwnership = 'adopted'
+    }
+    Set-InstallationReceipt $installs[0] $installationOwnership
+    Set-Env TEAMS_CATALOG_UPDATE_STATUS 'complete'
 }
 Write-Host "Teams personal app is installed for $UserId."

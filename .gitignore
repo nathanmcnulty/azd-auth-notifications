@@ -3,5 +3,6 @@ dist/
 .azure/
 .local/
 *.zip
+reports/
 .env
 infra/main.json

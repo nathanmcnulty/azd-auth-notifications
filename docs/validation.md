@@ -4,7 +4,8 @@ Initial milestone, 2026-09-13 (Pacific time).
 
 ## Passed
 
-- TypeScript checks, runtime bundle, and 25 behavioral tests.
+- TypeScript checks, runtime bundle, and 28 behavioral tests.
+- The shared `azd-reference` deployment-validation component is vendored with an auth-notifications validation adapter; its plan mode is read-only and delivery mode remains explicitly opt-in.
 - Runtime dependency audit: no known vulnerabilities at validation time.
 - Bicep compilation and PowerShell parsing.
 - GitHub Validate and Security hygiene workflows for the initial main milestone.
