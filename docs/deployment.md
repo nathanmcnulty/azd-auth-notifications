@@ -40,7 +40,7 @@ Generate the personal package, then publish/install it for an explicit pilot:
     ./scripts/New-TeamsAppPackage.ps1
     ./scripts/Install-TeamsApp.ps1 -AdminUpn <admin-UPN> -UserId <pilot-object-id>
 
-The installer checks the deployed identity, personal-scope manifest, published version, and recorded catalog ID. It refuses silent package updates or replacement of a missing recorded app. Use -WhatIf for a plan. If normal Graph PowerShell WAM fails with a missing window handle, -UseCachedWam tries the selected administrator's existing broker session without opening a device-code flow. Missing cache/consent remains an authentication blocker.
+The installer checks the deployed identity, personal-scope manifest, published version, and recorded catalog ID. It records package hashes, catalog and installation ownership, and update state in the azd environment. It refuses silent package updates, downgrade, or replacement of a missing recorded app; use `-AdoptExisting` only after reviewing an app created outside the current receipt. Use `-UpdateExisting` for an intentional higher package version and `-WhatIf` for a plan. If normal Graph PowerShell WAM fails with a missing window handle, `-UseCachedWam` tries the selected administrator's existing broker session without opening a device-code flow. Missing cache/consent remains an authentication blocker.
 
 Teams availability is a separate administration step. When installation returns App is blocked by app permission policy, use Teams admin center or Teams PowerShell to allow this app for the pilot. In Teams PowerShell, Get-M365TeamsApp requires the **catalog ID** saved as TEAMS_CATALOG_APP_ID, not the manifest/bot client ID:
 
@@ -60,6 +60,21 @@ The package requires valid public developer/privacy/terms URLs supplied by the a
 
     npm test
     azd deploy
+
+This repository vendors the reviewed `notification-contracts@1.0.0` and
+`deployment-validation@1.0.0` components from `azd-reference`. The exact source
+revisions and file hashes are recorded in `azd-components.lock.json`; deployment
+does not fetch components at runtime. Keep solution-specific detection, routing,
+Bot Service lifecycle, and delivery state in this repository.
+
+Run the shared validation wrapper after provisioning:
+
+    ./scripts/Test-Deployment.ps1
+    ./scripts/Test-Deployment.ps1 -TestDelivery -UserId <pilot-object-id> -Channel teams
+
+The first command is read-only and produces a redacted report under
+`reports/`. The delivery mode is an explicit live notification test and requires
+collection to remain disabled.
 
 The deploy hook builds the package and deploys it with remote build disabled. Validate selected delivery routes before enabling collection:
 

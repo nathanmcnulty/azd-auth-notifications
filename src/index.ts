@@ -10,6 +10,10 @@ import { collect, dispatch, type DispatchOutcome, type Job } from "./engine.js";
 import { AzureState } from "./state.js";
 import { Graph } from "./graph.js";
 import { ManagedIdentityTeamsBot } from "./bot.js";
+import {
+  toNotificationDeliveryResult,
+  toNotificationEnvelope,
+} from "./contracts.js";
 const config = parseConfig(process.env);
 const state = new AzureState(
   `https://${process.env.STORAGE_ACCOUNT_NAME}.table.core.windows.net`,
@@ -24,6 +28,16 @@ if (teamsEnabled && !teamsAppId) throw Error("TeamsBotAppIdRequired");
 const bot = teamsEnabled
   ? new ManagedIdentityTeamsBot(teamsAppId!, config.tenantId, state, console)
   : undefined;
+const contractEnvironment = () => ({
+  name: process.env.AZURE_ENV_NAME || "local",
+  tenantId: config.tenantId,
+  ...(process.env.AZURE_SUBSCRIPTION_ID
+    ? { subscriptionId: process.env.AZURE_SUBSCRIPTION_ID }
+    : {}),
+  ...(process.env.AZURE_RESOURCE_GROUP
+    ? { resourceGroup: process.env.AZURE_RESOURCE_GROUP }
+    : {}),
+});
 async function send(job: Job) {
   const message = renderNotification(
     job.registration,
@@ -125,9 +139,31 @@ app.http("testDelivery", {
       new Set(jobs.map((job) => job.key)),
       (outcome) => outcomes.push(outcome),
     );
+    const environment = contractEnvironment();
+    const envelope = toNotificationEnvelope(registration, environment, true);
+    const deliveryResults = jobs.flatMap((job) => {
+      const outcome = outcomes.find((item) => item.key === job.key);
+      return outcome
+        ? [
+            toNotificationDeliveryResult(
+              job.registration,
+              job,
+              outcome.status,
+              outcome.code,
+              environment,
+              undefined,
+              true,
+            ),
+          ]
+        : [];
+    });
     return {
       status: 200,
-      jsonBody: { registrationId: registration.id, deliveries: outcomes },
+      jsonBody: {
+        registrationId: registration.id,
+        deliveries: outcomes,
+        contract: { envelope, deliveries: deliveryResults },
+      },
     };
   },
 });

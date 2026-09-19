@@ -30,6 +30,10 @@ Requires Node.js 22+, PowerShell 7, Azure CLI, Azure Developer CLI, and Bicep vi
 
 See [deployment](docs/deployment.md), [operations](docs/operations.md), and [validation](docs/validation.md).
 
+The solution vendors the reviewed `notification-contracts` and
+`deployment-validation` components from [azd-reference](https://github.com/nathanmcnulty/azd-reference).
+Their exact revisions and hashes are recorded in `azd-components.lock.json`.
+
 ## Detection
 
 Accepts successful Add Passkey (device-bound) and User registered security info records with method details. Generic Passkey events are excluded because the dev tenant emits paired passkey-specific events. Unknown method names use a generic label without copying arbitrary audit content. Starts, failures, updates, deletions, and administrator-created methods are excluded.
