@@ -4,6 +4,24 @@ export interface GraphCredential {
 }
 export type GraphFetch = typeof fetch;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_GRAPH_READ_ATTEMPTS = 3;
+
+function retryDelayMs(
+  response: Response,
+  attempt: number,
+  now: () => number,
+): number {
+  const retryAfter = response.headers.get("Retry-After")?.trim();
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds >= 0)
+      return Math.min(Math.ceil(seconds * 1000), 30_000);
+    const date = Date.parse(retryAfter);
+    if (Number.isFinite(date))
+      return Math.min(Math.max(date - now(), 0), 30_000);
+  }
+  return Math.min(1000 * 2 ** (attempt - 1), 8000);
+}
 
 function record(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -36,6 +54,9 @@ export class Graph {
       managedIdentityClientId: process.env.MANAGED_IDENTITY_CLIENT_ID,
     }),
     private readonly fetchImpl: GraphFetch = fetch,
+    private readonly wait: (ms: number) => Promise<void> = (ms) =>
+      new Promise((resolve) => setTimeout(resolve, ms)),
+    private readonly now: () => number = Date.now,
   ) {}
   async request(path: string, body?: unknown): Promise<Response> {
     const url = new URL(path, "https://graph.microsoft.com/v1.0/");
@@ -53,18 +74,32 @@ export class Graph {
     if (!token) throw Error("GraphTokenUnavailable");
     if (tokenTenant(token.token) !== this.expectedTenantId.toLowerCase())
       throw Error("GraphTenantMismatch");
-    const response = await this.fetchImpl(url, {
-      method: body === undefined ? "GET" : "POST",
-      headers: {
-        Authorization: `Bearer ${token.token}`,
-        "Content-Type": "application/json",
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal: AbortSignal.timeout(30000),
-      redirect: "error",
-    });
-    if (!response.ok) throw Error(`GraphHttp${response.status}`);
-    return response;
+    for (let attempt = 1; attempt <= MAX_GRAPH_READ_ATTEMPTS; attempt++) {
+      const response = await this.fetchImpl(url, {
+        method: body === undefined ? "GET" : "POST",
+        headers: {
+          Authorization: `Bearer ${token.token}`,
+          "Content-Type": "application/json",
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: AbortSignal.timeout(30000),
+        redirect: "error",
+      });
+      if (response.ok) return response;
+      if (
+        body !== undefined ||
+        attempt === MAX_GRAPH_READ_ATTEMPTS ||
+        !(
+          response.status === 429 ||
+          (response.status >= 500 && response.status <= 599)
+        )
+      )
+        throw Error(`GraphHttp${response.status}`);
+      const delay = retryDelayMs(response, attempt, this.now);
+      await response.body?.cancel();
+      await this.wait(delay);
+    }
+    throw Error("GraphRetryExhausted");
   }
   async *audits(from: string, to: string): AsyncGenerator<unknown[]> {
     let path: string | undefined =
