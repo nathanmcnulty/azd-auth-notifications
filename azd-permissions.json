@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "solutionId": "azd-auth-notifications",
+  "status": "implemented",
+  "coverage": "partial",
+  "reviewedOn": "2026-10-02",
+  "requirements": [
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "application",
+      "permission": "AuditLog.Read.All",
+      "principal": "workload",
+      "phase": "runtime",
+      "feature": "core",
+      "defaultEnabled": true,
+      "scope": "tenant",
+      "rationale": "Grants used for audit collection and user resolution.",
+      "evidenceState": "code",
+      "evidence": [
+        {
+          "path": "scripts/Configure-Permissions.ps1",
+          "sha256": "68a06d358ea6ff0d1f4bf4de571c0a03b0bfd2323d3c55507071edf94fadf721"
+        }
+      ]
+    },
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "application",
+      "permission": "User.Read.All",
+      "principal": "workload",
+      "phase": "runtime",
+      "feature": "core",
+      "defaultEnabled": true,
+      "scope": "tenant",
+      "rationale": "Grants used for audit collection and user resolution.",
+      "evidenceState": "code",
+      "evidence": [
+        {
+          "path": "scripts/Configure-Permissions.ps1",
+          "sha256": "68a06d358ea6ff0d1f4bf4de571c0a03b0bfd2323d3c55507071edf94fadf721"
+        }
+      ]
+    },
+    {
+      "resource": "exchange-online",
+      "kind": "exchange-rbac",
+      "permission": "Application Mail.Send",
+      "principal": "workload",
+      "phase": "runtime",
+      "feature": "email",
+      "defaultEnabled": false,
+      "scope": "configured-sender-mailbox",
+      "rationale": "Mailbox-scoped Exchange Application RBAC; do not replace with tenant-wide Graph Mail.Send.",
+      "evidenceState": "documented",
+      "evidence": [
+        {
+          "path": "docs/deployment.md",
+          "sha256": "b63fe99dfd2322f1d84d498dc37c0d5cf9366fd68975ddea025acc2667662635"
+        }
+      ]
+    }
+  ],
+  "gaps": [
+    "Azure RBAC scopes, operator/consent roles, cleanup, and optional connector permissions still need a full review."
+  ]
+}
