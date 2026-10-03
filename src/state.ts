@@ -1,23 +1,48 @@
-import { DefaultAzureCredential } from "@azure/identity";
+import { DefaultAzureCredential, type TokenCredential } from "@azure/identity";
 import { TableClient } from "@azure/data-tables";
 import { createHash } from "node:crypto";
 import type { Job, State } from "./engine.js";
+import { compactTerminalPayloads } from "./retention.js";
+
 const hash = (key: string) => createHash("sha256").update(key).digest("hex");
+export const deliveryRowKey = (key: string) => hash(key);
 const status = (error: unknown) =>
   (error as { statusCode?: number }).statusCode;
+
+export async function createDeliveryEntity(
+  table: TableClient,
+  tenantId: string,
+  job: Job,
+  createdAt = new Date(),
+): Promise<boolean> {
+  try {
+    const response = await table.createEntity({
+      partitionKey: tenantId,
+      rowKey: deliveryRowKey(job.key),
+      kind: "delivery",
+      status: "pending",
+      payload: JSON.stringify(job),
+      createdAt: createdAt.toISOString(),
+    });
+    if (response.etag) job.etag = response.etag;
+    return true;
+  } catch (error) {
+    if (status(error) === 409) return false;
+    throw error;
+  }
+}
+
 export class AzureState implements State {
   private table: TableClient;
   constructor(
     endpoint: string,
     private tenantId: string,
+    tableName = "AuthNotifications",
+    credential: TokenCredential = new DefaultAzureCredential({
+      managedIdentityClientId: process.env.MANAGED_IDENTITY_CLIENT_ID,
+    }),
   ) {
-    this.table = new TableClient(
-      endpoint,
-      "AuthNotifications",
-      new DefaultAzureCredential({
-        managedIdentityClientId: process.env.MANAGED_IDENTITY_CLIENT_ID,
-      }),
-    );
+    this.table = new TableClient(endpoint, tableName, credential);
   }
   async init() {
     try {
@@ -45,19 +70,7 @@ export class AzureState implements State {
     );
   }
   async add(job: Job) {
-    try {
-      const response = await this.table.createEntity({
-        partitionKey: this.tenantId,
-        rowKey: hash(job.key),
-        kind: "delivery",
-        status: "pending",
-        payload: JSON.stringify(job),
-        createdAt: new Date().toISOString(),
-      });
-      if (response.etag) job.etag = response.etag;
-    } catch (e) {
-      if (status(e) !== 409) throw e;
-    }
+    await createDeliveryEntity(this.table, this.tenantId, job);
   }
   async *pending(): AsyncGenerator<Job> {
     for await (const e of this.table.listEntities({
@@ -72,7 +85,7 @@ export class AzureState implements State {
       const response = await this.table.updateEntity(
         {
           partitionKey: this.tenantId,
-          rowKey: hash(job.key),
+          rowKey: deliveryRowKey(job.key),
           status: "sending",
           attemptedAt: new Date().toISOString(),
         },
@@ -92,7 +105,7 @@ export class AzureState implements State {
     await this.table.updateEntity(
       {
         partitionKey: this.tenantId,
-        rowKey: hash(job.key),
+        rowKey: deliveryRowKey(job.key),
         status: deliveryStatus,
         code,
         updatedAt: new Date().toISOString(),
@@ -125,5 +138,18 @@ export class AzureState implements State {
     } catch (e) {
       if (status(e) !== 404) throw e;
     }
+  }
+  async compactTerminalPayloads(
+    cutoff: Date,
+    limit: number,
+    compactedAt = new Date(),
+  ) {
+    return compactTerminalPayloads(
+      this.table,
+      this.tenantId,
+      cutoff,
+      limit,
+      compactedAt,
+    );
   }
 }

@@ -1,0 +1,353 @@
+{
+  "schemaVersion": "1.0.0",
+  "repository": "nathanmcnulty/azd-auth-notifications",
+  "sourceRevision": "9790349b2a2d77cf6fec1e37a9c0a02da52ef1fc",
+  "capturedAt": "2026-10-03",
+  "items": [
+    {
+      "id": "AUTH-001",
+      "title": "Reconcile this backlog with current source and active work",
+      "kind": "discovery",
+      "priority": "P1",
+      "status": "ready",
+      "wave": 0,
+      "problem": "Plans and implementation evidence are spread across files; the captured source can change while other tasks work.",
+      "scope": [
+        "docs/backlog.json",
+        "docs/backlog.md",
+        "Existing roadmap, execution status, open issues and pull requests (read-only)"
+      ],
+      "acceptance": [
+        "Classify each candidate as implemented, still open, superseded or awaiting evidence; retain source links and reasons.",
+        "Inspect dirty state, remotes, worktrees and local environment presence without reading secrets; avoid duplicate work with active owners.",
+        "Resolve the actual offline validation commands and record exact current default-branch/working-tree provenance; do not copy historical live passes to newer code."
+      ],
+      "validation": [
+        "git status --short",
+        "git remote -v",
+        "git worktree list --porcelain",
+        "Read the applicable instructions and validation workflow; read gh issue list and gh pr list for the named repository using nathanmcnulty. Do not create or modify issues/PRs."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [],
+      "sources": [
+        "README.md",
+        "docs/roadmap.md"
+      ],
+      "evidence": [],
+      "blocker": null
+    },
+    {
+      "id": "AUTH-002",
+      "title": "Prove successful registration and recipient-visible email/Teams routes",
+      "kind": "verification",
+      "priority": "P1",
+      "status": "proposed",
+      "wave": 2,
+      "problem": "The implemented pilot still needs real registration and observed delivery evidence for each audience/channel.",
+      "scope": [
+        "docs/validation.md",
+        "docs/operations.md"
+      ],
+      "acceptance": [
+        "Record one affected-user receipt for every enabled route and independent optional administrator routing.",
+        "Verify pilot allowlist, no historical notifications on activation, missing mailbox/guest rejection and paired passkey deduplication.",
+        "Record provider acceptance separately from human receipt, and clean only recorded owned app/installation objects."
+      ],
+      "validation": [
+        "Use the offline commands in the registered validation workflow; record the exact commands, revision and results before implementation is complete.",
+        "Run focused tests for changed behavior from tests/; fixtures do not prove live-service or endpoint behavior.",
+        "After separate authorization, retain redacted exact-target live evidence and cleanup results outside public Git. Do not execute live operations from this backlog alone."
+      ],
+      "dependencies": [],
+      "authorization": "external-delivery",
+      "components": [],
+      "sources": [
+        "docs/roadmap.md",
+        "docs/validation.md"
+      ],
+      "evidence": [],
+      "blocker": null
+    },
+    {
+      "id": "AUTH-003",
+      "title": "Design Azure Communication Services transport for both audiences",
+      "kind": "discovery",
+      "priority": "P2",
+      "status": "proposed",
+      "wave": 3,
+      "problem": "ACS is requested in the legacy roadmap but transport, destinations and operational boundaries are not yet chosen.",
+      "scope": [
+        "docs/roadmap.md",
+        "docs/",
+        "azd-permissions.json"
+      ],
+      "acceptance": [
+        "Choose email, SMS or separate milestones with verified regional/sender requirements, costs and delivery evidence.",
+        "Resolve destinations only from approved recipient sources; never from a newly registered authentication method.",
+        "Keep end-user and administrator choices independent; document opt-in, secret/identity boundary and exact permission additions before coding."
+      ],
+      "validation": [
+        "Use the offline commands in the registered validation workflow; record the exact commands, revision and results before implementation is complete.",
+        "Run focused tests for changed behavior from tests/; fixtures do not prove live-service or endpoint behavior."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [],
+      "sources": [
+        "docs/roadmap.md"
+      ],
+      "evidence": [],
+      "blocker": null
+    },
+    {
+      "id": "AUTH-004",
+      "title": "Add provider-evidence-based ambiguous-send review and replay",
+      "kind": "maintenance",
+      "priority": "P2",
+      "status": "proposed",
+      "wave": 2,
+      "problem": "Ambiguous provider results must not become duplicate notifications.",
+      "scope": [
+        "src/",
+        "tests/",
+        "docs/operations.md"
+      ],
+      "acceptance": [
+        "Review queue records tenant/audit/recipient/channel identity without secrets.",
+        "Replay requires provider evidence or explicit operator decision and preserves idempotency."
+      ],
+      "validation": [
+        "Use the offline commands in the registered validation workflow; record the exact commands, revision and results before implementation is complete.",
+        "Run focused tests for changed behavior from tests/; fixtures do not prove live-service or endpoint behavior."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [],
+      "sources": [
+        "docs/roadmap.md"
+      ],
+      "evidence": [],
+      "blocker": null
+    },
+    {
+      "id": "AUTH-005",
+      "title": "Add deduplication-safe retention cleanup",
+      "kind": "maintenance",
+      "priority": "P2",
+      "status": "done",
+      "wave": 2,
+      "problem": "Retention must not erase the state that prevents historical redispatch.",
+      "scope": [
+        "src/core.ts",
+        "src/index.ts",
+        "src/state.ts",
+        "src/retention.ts",
+        "tests/core.test.ts",
+        "tests/state.test.ts",
+        "scripts/Test-RetentionState.ts",
+        "infra/main.bicep",
+        "infra/main.parameters.json",
+        "infra/resources.bicep",
+        "package.json",
+        "docs/deployment.md",
+        "docs/operations.md",
+        "docs/privacy.md"
+      ],
+      "acceptance": [
+        "Separate short-lived operational detail from durable deduplication markers.",
+        "Fixtures prove delayed retry and overlapping windows cannot resurrect a notification after cleanup."
+      ],
+      "validation": [
+        "pwsh -File ./scripts/Test-Repository.ps1",
+        "Check changed-file Prettier formatting and exact reviewed file hashes.",
+        "After explicit lab-test authorization: run npm run test:retention-live with a disposable identity-only Storage account, explicit subscription and private receipt; verify tenant through az account show before token selection.",
+        "Remove only the receipt-bound disposable test account/group and scoped role; verify resource and assignment absence."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [],
+      "sources": [
+        "docs/roadmap.md"
+      ],
+      "evidence": [
+        "Selected for local implementation by maintainer instruction 2026-10-03: coordinate backlog local-first with independent review and lab validation as needed; publication, enforcement and external delivery remain outside this code packet.",
+        "Independent review passed final 14-file manifest 0101020349dde964f8f8c5dfde63ba32ab8ca173069683c964914133af1c65fb at base 346d9698f0b59a990d097518bc2726eba2ec8d64. Pagination and lower-cap/policy reset findings were corrected before live approval. Exact bytes integrated locally after clean target/base checks.",
+        "Integrated validation wrapper passed npm ci (audit 0 vulnerabilities), 37/37 tests, TypeScript/package build, Bicep compilation and git diff --check. Retention defaults disabled; no additional application permission is needed beyond existing Table data access.",
+        "Live synthetic Azure Table test passed on the verified lab subscription: bounded 2+1 compaction, three permanent same-row tombstones and replay suppression, strict cutoff, nonterminal/checkpoint/conversation preservation and actual ETag 412 race safety. First credential-harness attempt failed before table creation because CLI rejects tenant plus subscription; reviewed subscription-only retry passed.",
+        "Disposable lab resource group, Storage resources and scoped test role were removed and their absence verified. Exact private receipts and logs are retained outside Git in the coordinator execution artifacts. No external notification transport was exercised."
+      ],
+      "blocker": null,
+      "claim": null
+    },
+    {
+      "id": "AUTH-006",
+      "title": "Expand method coverage using sanitized real samples",
+      "kind": "maintenance",
+      "priority": "P2",
+      "status": "proposed",
+      "wave": 2,
+      "problem": "Synced passkeys and administrator registration are not established by current samples.",
+      "scope": [
+        "src/",
+        "tests/",
+        "docs/operations.md"
+      ],
+      "acceptance": [
+        "Capture sanitized paired/unpaired events and declare supported/unsupported variants.",
+        "Fixtures reject failed, started, deleted and unrelated registrations without guessing recipient identity."
+      ],
+      "validation": [
+        "Use the offline commands in the registered validation workflow; record the exact commands, revision and results before implementation is complete.",
+        "Run focused tests for changed behavior from tests/; fixtures do not prove live-service or endpoint behavior."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [],
+      "sources": [
+        "docs/roadmap.md"
+      ],
+      "evidence": [],
+      "blocker": null
+    },
+    {
+      "id": "AUTH-007",
+      "title": "Prepare ownership-bound Teams onboarding and removal",
+      "kind": "maintenance",
+      "priority": "P2",
+      "status": "proposed",
+      "wave": 2,
+      "problem": "Teams lifecycle improvements are requested while central extraction is still deferred.",
+      "scope": [
+        "src/",
+        "tests/",
+        "docs/operations.md"
+      ],
+      "acceptance": [
+        "Catalog propagation retries reuse exact recorded app/installation IDs.",
+        "Tenant mismatch and foreign installations fail closed; extraction waits for two consumer delivery proofs."
+      ],
+      "validation": [
+        "Use the offline commands in the registered validation workflow; record the exact commands, revision and results before implementation is complete.",
+        "Run focused tests for changed behavior from tests/; fixtures do not prove live-service or endpoint behavior."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [
+        "notification-contracts"
+      ],
+      "sources": [
+        "docs/roadmap.md"
+      ],
+      "evidence": [],
+      "blocker": null
+    },
+    {
+      "id": "AUTH-008",
+      "title": "Evaluate the optional shared Flex poller host",
+      "kind": "discovery",
+      "priority": "P2",
+      "status": "proposed",
+      "wave": 1,
+      "problem": "The solution already owns recipient routing and durable table state; only hosting duplication is a candidate for reuse.",
+      "scope": [
+        "infra/",
+        "azd-components.lock.json",
+        "docs/"
+      ],
+      "acceptance": [
+        "Compare current host with the pilot manifest; retain Table state, recipient policies and explicit collection activation.",
+        "Do not replace identity-only storage with shared keys or introduce Log Analytics solely for reuse.",
+        "Record adopt/defer decision and exact proposed immutable pin; no host migration until compatibility is established."
+      ],
+      "validation": [
+        "Use the offline commands in the registered validation workflow; record the exact commands, revision and results before implementation is complete.",
+        "Run focused tests for changed behavior from tests/; fixtures do not prove live-service or endpoint behavior."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [
+        "flex-scheduled-poller-host"
+      ],
+      "sources": [
+        "README.md",
+        "infra/main.bicep"
+      ],
+      "evidence": [],
+      "blocker": null
+    },
+    {
+      "id": "AUTH-009",
+      "title": "Adopt deployment-validation 1.1.1 with compatible existing reports",
+      "kind": "maintenance",
+      "priority": "P1",
+      "status": "done",
+      "wave": 1,
+      "problem": "The captured consumer lock used stable1.0.0; the selected update adopts the reviewed immutable1.1.1 release without activating new evidence-binding behavior.",
+      "scope": [
+        "azd-components.lock.json",
+        "scripts/vendor/Azd.DeploymentValidation/",
+        "tests/",
+        "docs/"
+      ],
+      "acceptance": [
+        "Review the exact 1.0.0-to-1.1.1 diff and current consumer hashes before deciding to adopt.",
+        "Prepare only the compatible managed files and lock in one owned worktree; retain domain validation extensions.",
+        "Offline validation and commit-only rollback are required; live deployment and publication are separately authorized."
+      ],
+      "validation": [
+        "pwsh -File ./scripts/Test-Repository.ps1",
+        "Verify the three managed deployment-validation files against the exact immutable lock hashes; preserve all unrelated components.",
+        "Run the repository-specific plan/schema compatibility check with provider commands mocked or forbidden; no live deployment or delivery is implied by this vendoring update."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [
+        "deployment-validation"
+      ],
+      "sources": [
+        "azd-components.lock.json"
+      ],
+      "evidence": [
+        "Selected for separate compatible managed-files/lock upgrade under coordinated maintainer instruction. Existing vendor files match their 1.0.0 lock; reviewed immutable 1.1.1 source resolves to 0c96cc89c554ffc3b3ca82ceda12da6591e816c1. Fresh auth main base c60ef82114cebd7885bed02a726140b21904f5a6 already includes independently owned Graph retry fix; it is not reimplemented here.",
+        "Independent five-file review passed diff778305e0ffba1854a4bd3397bdcb156a2b1d737211eb5a224dd2c88578af5682 at consumer basec60ef82114cebd7885bed02a726140b21904f5a6. Three managed files byte-match reviewed signed release1.1.1 at0c96cc89c554ffc3b3ca82ceda12da6591e816c1; notification-contracts remains1.0.0. Existing adapter and unbound schema1.0 output are preserved.",
+        "Fresh-main author and independent checks passed32/32 Node tests, audit0, typecheck/build, Bicep, PSSA and zero-az/azd plan smoke3/3. Integrated retention-plus-upgrade canonical checks passed37/37 and plan smoke3/3; retention prose was preserved while correcting one version token. Reviewed central desiredVersion/assertion/documentation update passed47/47 focused tests. No new lab deployment was needed.",
+        "Integrated locally after target/base checks; the template remains independently deployable. Release and evidence-binding feature adoption remain separate tasks."
+      ],
+      "blocker": null,
+      "claim": null
+    },
+    {
+      "id": "AUTH-010",
+      "title": "Add bounded retry for Graph throttling and transient server errors",
+      "kind": "discovery",
+      "priority": "P1",
+      "status": "done",
+      "wave": 0,
+      "problem": "Open report captured 2026-10-03 during execution reconciliation. Another code-quality task may own an active fix; inspect its PR and current source before dispatch.",
+      "scope": [
+        "Linked issue and current source (read-only)",
+        "Repository-local backlog evidence"
+      ],
+      "acceptance": [
+        "Read the linked issue and current default branch; classify the exact defect, current owner and evidence gap.",
+        "Record a current PR or verified resolution before selecting any implementation; preserve broader feature and live acceptance gates."
+      ],
+      "validation": [
+        "Read current issue and PR state using nathanmcnulty; do not modify or close issues during reconciliation.",
+        "Inspect dirty state and worktrees; resolve the exact current revision and relevant offline commands before implementation."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [],
+      "sources": [
+        "https://github.com/nathanmcnulty/azd-auth-notifications/issues/7"
+      ],
+      "evidence": [
+        "Verified issue #7 closed and PR #8 merged 2026-10-03 at c60ef82114cebd7885bed02a726140b21904f5a6: https://github.com/nathanmcnulty/azd-auth-notifications/pull/8. Separate quality task owns the fix and required validation-check repair. This is remote-main resolution; the canonical permission-tracking checkout has not been reset or pulled over local work."
+      ],
+      "blocker": null
+    }
+  ]
+}

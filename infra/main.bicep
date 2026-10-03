@@ -15,6 +15,9 @@ param helpdeskText string = ''
 @minValue(1)
 @maxValue(1440)
 param auditOverlapMinutes int = 60
+@minValue(0)
+@maxValue(36500)
+param terminalPayloadRetentionDays int = 0
 var teamsBotEnabled = contains(split('${userChannels},${adminChannels}', ','), 'teams')
 
 var resourceToken = toLower(uniqueString(subscription().id, environmentName))
@@ -50,6 +53,7 @@ module resources 'resources.bicep' = {
     emailSenderUserId: emailSenderUserId
     helpdeskText: helpdeskText
     auditOverlapMinutes: auditOverlapMinutes
+    terminalPayloadRetentionDays: terminalPayloadRetentionDays
     teamsBotEnabled: teamsBotEnabled
     tags: tags
   }

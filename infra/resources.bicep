@@ -14,6 +14,7 @@ param collectionEnabled bool
 param emailSenderUserId string
 param helpdeskText string
 param auditOverlapMinutes int
+param terminalPayloadRetentionDays int
 param teamsBotEnabled bool
 param tags object = {}
 
@@ -150,6 +151,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'EMAIL_SENDER_USER_ID', value: emailSenderUserId }
         { name: 'HELPDESK_TEXT', value: helpdeskText }
         { name: 'AUDIT_OVERLAP_MINUTES', value: string(auditOverlapMinutes) }
+        { name: 'TERMINAL_PAYLOAD_RETENTION_DAYS', value: string(terminalPayloadRetentionDays) }
       ]
     }
   }
