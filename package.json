@@ -6,6 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
+    "review:deliveries": "tsx scripts/Review-Deliveries.ts",
     "test:retention-live": "tsx scripts/Test-RetentionState.ts",
     "build": "npm run typecheck && node build.mjs",
     "format": "prettier --write src tests scripts/*.ts package.json tsconfig.json build.mjs"

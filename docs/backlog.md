@@ -281,7 +281,7 @@ Review AUTH-002 against the current repository state. Its status or authorizatio
 
 - **Kind:** maintenance
 - **Priority:** P2
-- **Status:** proposed
+- **Status:** done
 - **Wave:** 2
 - **Authorization:** local-only
 - **Blocker:** _none_
@@ -293,9 +293,12 @@ Ambiguous provider results must not become duplicate notifications.
 
 **Scope:**
 
-- src/
+- src/ delivery-state review APIs
 - tests/
+- scripts/ operator review CLI and validation fixtures
+- package.json operator CLI entry point
 - docs/operations.md
+- azd-permissions.json if the new operator workflow requires an additional recorded actor or gap
 
 **Acceptance:**
 
@@ -321,7 +324,14 @@ Ambiguous provider results must not become duplicate notifications.
 
 **Evidence:**
 
-- _none_
+- Independently reviewed operator-only CLI and review engine from base 2cfa9ed73332111d945cdba1adbbbd07205e32ea, including exact main Graph retry merge c60ef82114cebd7885bed02a726140b21904f5a6. Lists bounded paginated review metadata; accept, suppress and evidence/acknowledgement-based requeue use conditional atomic delivery-plus-decision transactions. No direct dispatch or authentication initiation.
+- Source packet SHA-256 930aa55682b82c9114edc0ca55d4ce8cd4a29a5996a89d1b7aa30177bcc7e4a6; frozen runtime and documentation independently reviewed. Provider evidence remains an operator assertion, not automatic provider verification. Decision audit omits event/recipient/channel identities; terminal timestamps reset at the decision.
+- Offline validation&colon; scripts/Test-Repository.ps1 passed 55/55 tests, audit 0, typecheck/build, Bicep and diff checks; focused review/retention 23/23, independent review suite 14/14, permission schema and five managed component hashes exact. Canonical integration passed 55/55 plus build and permission schema after baseline parity checks.
+- Real Azure Table test in the selected lab passed nine assertions&colon; exact account/pinned actor, table setup, bounded paginated redacted list, requeue/stable replay, accepted/suppressed payload and creation-time preservation with new terminal timestamps, stale-ETag atomic rejection with no decision audit, retention exclusions, and the actual Windows read-only CLI. Synthetic records only; no notification transport or recipient-visible delivery claim.
+- Independently reviewed provisioning, private harness and cleanup were used for a new receipt-bound disposable account. Cleanup state deleted-and-verified&colon; account-scoped test role and resource group removed, with group/resource/direct-role absence verified. The first preflight stopped before mutation because the directory CLI command rejected --subscription; reviewed replacement used cached subscription-bound Storage-token identity without exposing tokens.
+- Permission metadata records operator Table Data Reader/Contributor requirements without automatic grants. Existing deployment-validation 1.1.1 and notification-contracts 1.0.0 pins preserved. Reviewed preservation branch codex/auth-review-backlog-20261003; hosted CI, template release and human delivery acceptance remain separate.
+- Frozen live evidence binding&colon; result SHA-256 59d44e7b39e8631fb445a861f030d653ee862a676125ff7d4a823cd2d4b82d4a; harness ce3bbddad4ce4be651a15cddf02d5af831eda3e5d88a34908254a884dcbc76bf; source manifest 1cc83c6e1628cd5e03d875867369ce81a11bbe64028286d1c4af4bb5f78eb5be; provision 1e08666d60c66e2360387c4fcf876c0e38197ada4a24b669912b46d10fd79c8d; cleanup 5eaf306c1b8a5bdbd6e54755d63559cd49bc4d6e1b223dfc10236661944b803d.
+- Final cleanup provenance independently reviewed&colon; receipt SHA-256 9b1909988295239b4f565aa8e1bb6916446fafaf7eeede399b3929c0fece8370; cleanup log 4e1213b194a28047d5d35597cd680ff267b14c6b2ad2e52407b291fe3ccb55b8. Coordinator verified group absent, zero target resources, zero matching role-assignment GUIDs, and zero direct assignments at the deleted account scope.
 
 **Review and authorization note:**
 

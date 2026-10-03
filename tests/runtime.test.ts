@@ -64,6 +64,145 @@ test("a foreign pagination link is rejected without sending it a bearer token", 
   assert.equal(authorizations.length, 1);
 });
 
+test("Graph reads honor Retry-After on 429 before succeeding", async () => {
+  let requests = 0;
+  const delays: number[] = [];
+  const graph = new Graph(
+    tenant,
+    {
+      async getToken() {
+        return { token: jwt(tenant) };
+      },
+    },
+    async (_input, init) => {
+      assert.equal(init?.method, "GET");
+      requests++;
+      return requests === 1
+        ? new Response("throttled", {
+            status: 429,
+            headers: { "Retry-After": "2" },
+          })
+        : new Response("{}", { status: 200 });
+    },
+    async (ms) => {
+      delays.push(ms);
+    },
+  );
+  await graph.request("auditLogs/directoryAudits");
+  assert.equal(requests, 2);
+  assert.deepEqual(delays, [2000]);
+});
+
+test("Graph reads cap an HTTP-date Retry-After without sleeping in tests", async () => {
+  const fixedNow = Date.parse("2026-10-03T00:00:00Z");
+  const retryAfter = new Date(fixedNow + 45_000).toUTCString();
+  let requests = 0;
+  const delays: number[] = [];
+  const graph = new Graph(
+    tenant,
+    {
+      async getToken() {
+        return { token: jwt(tenant) };
+      },
+    },
+    async () => {
+      requests++;
+      return requests === 1
+        ? new Response("unavailable", {
+            status: 503,
+            headers: { "Retry-After": retryAfter },
+          })
+        : new Response("{}", { status: 200 });
+    },
+    async (ms) => {
+      delays.push(ms);
+    },
+    () => fixedNow,
+  );
+  await graph.request("auditLogs/directoryAudits");
+  assert.equal(requests, 2);
+  assert.deepEqual(delays, [30_000]);
+});
+
+test("Graph reads stop after bounded transient server retries", async () => {
+  let requests = 0;
+  const delays: number[] = [];
+  const graph = new Graph(
+    tenant,
+    {
+      async getToken() {
+        return { token: jwt(tenant) };
+      },
+    },
+    async () => {
+      requests++;
+      return new Response("unavailable", { status: 503 });
+    },
+    async (ms) => {
+      delays.push(ms);
+    },
+  );
+  await assert.rejects(
+    graph.request("auditLogs/directoryAudits"),
+    /GraphHttp503/,
+  );
+  assert.equal(requests, 3);
+  assert.deepEqual(delays, [1000, 2000]);
+});
+
+test("Graph sends and transport exceptions are never retried automatically", async () => {
+  for (const status of [429, 503]) {
+    let requests = 0;
+    const graph = new Graph(
+      tenant,
+      {
+        async getToken() {
+          return { token: jwt(tenant) };
+        },
+      },
+      async (_input, init) => {
+        assert.equal(init?.method, "POST");
+        requests++;
+        return new Response("unknown outcome", { status });
+      },
+      async () => {
+        throw Error("UnexpectedRetry");
+      },
+    );
+    await assert.rejects(
+      graph.email(
+        "33333333-3333-4333-8333-333333333333",
+        "recipient@example.invalid",
+        "subject",
+        "body",
+      ),
+      new RegExp(`GraphHttp${status}`),
+    );
+    assert.equal(requests, 1);
+  }
+  let requests = 0;
+  const graph = new Graph(
+    tenant,
+    {
+      async getToken() {
+        return { token: jwt(tenant) };
+      },
+    },
+    async () => {
+      requests++;
+      throw Error("TransportOutcomeUnknown");
+    },
+    async () => {
+      throw Error("UnexpectedRetry");
+    },
+  );
+  await assert.rejects(
+    graph.request("auditLogs/directoryAudits"),
+    /TransportOutcomeUnknown/,
+  );
+  assert.equal(requests, 1);
+});
+
 function canonicalPasskey(overrides: Record<string, unknown> = {}) {
   return {
     id: "44444444-4444-4444-8444-444444444444",
