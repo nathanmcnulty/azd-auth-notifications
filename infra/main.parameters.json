@@ -13,6 +13,9 @@
     "collectionEnabled": { "value": "${COLLECTION_ENABLED=false}" },
     "emailSenderUserId": { "value": "${EMAIL_SENDER_USER_ID=}" },
     "helpdeskText": { "value": "${HELPDESK_TEXT=}" },
-    "auditOverlapMinutes": { "value": "${AUDIT_OVERLAP_MINUTES=60}" }
+    "auditOverlapMinutes": { "value": "${AUDIT_OVERLAP_MINUTES=60}" },
+    "terminalPayloadRetentionDays": {
+      "value": "${TERMINAL_PAYLOAD_RETENTION_DAYS=0}"
+    }
   }
 }

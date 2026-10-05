@@ -15,6 +15,7 @@ import {
   toNotificationEnvelope,
 } from "./contracts.js";
 const config = parseConfig(process.env);
+const RETENTION_BATCH_LIMIT = 25;
 const state = new AzureState(
   `https://${process.env.STORAGE_ACCOUNT_NAME}.table.core.windows.net`,
   config.tenantId,
@@ -60,14 +61,37 @@ app.timer("registrationNotifications", {
   schedule: "0 */5 * * * *",
   useMonitor: true,
   handler: async (_timer, context) => {
-    if (!config.enabled) return;
+    if (!config.enabled && config.terminalPayloadRetentionDays === 0) return;
     await state.init();
-    // Drain existing work even when collection is temporarily unavailable.
-    const delivered = await dispatch(config, state, send);
-    const queued = await collect(config, state, graph);
+    // Notification work precedes optional detail compaction in each cycle.
+    const delivered = config.enabled ? await dispatch(config, state, send) : 0;
+    const queued = config.enabled ? await collect(config, state, graph) : 0;
+    const now = new Date();
+    const retention =
+      config.terminalPayloadRetentionDays > 0
+        ? await state.compactTerminalPayloads(
+            new Date(
+              now.getTime() -
+                config.terminalPayloadRetentionDays * 24 * 60 * 60 * 1000,
+            ),
+            RETENTION_BATCH_LIMIT,
+            now,
+          )
+        : {
+            compacted: 0,
+            conflicts: 0,
+            sweepCompleted: false,
+            cursorConflict: false,
+            cursorReset: false,
+          };
     context.log("Registration notification cycle", {
       queued,
       attempted: delivered,
+      retentionCompacted: retention.compacted,
+      retentionConflicts: retention.conflicts,
+      retentionSweepCompleted: retention.sweepCompleted,
+      retentionCursorConflict: retention.cursorConflict,
+      retentionCursorReset: retention.cursorReset,
     });
   },
 });
