@@ -124,6 +124,14 @@ test("validates delivery configuration and its pilot safety boundary", () => {
     /AUDIT_OVERLAP_MINUTES/,
   );
   assert.throws(
+    () => config({ TERMINAL_PAYLOAD_RETENTION_DAYS: "1.5" }),
+    /TERMINAL_PAYLOAD_RETENTION_DAYS/,
+  );
+  assert.throws(
+    () => config({ TERMINAL_PAYLOAD_RETENTION_DAYS: "36501" }),
+    /TERMINAL_PAYLOAD_RETENTION_DAYS/,
+  );
+  assert.throws(
     () => config({ HELPDESK_TEXT: "<b>call us</b>" }),
     /HELPDESK_TEXT/,
   );
@@ -137,6 +145,10 @@ test("validates delivery configuration and its pilot safety boundary", () => {
   assert.equal(allUsers.allUsers, true);
   assert.deepEqual(allUsers.userChannels, ["email"]);
   assert.equal(allUsers.overlapMinutes, 60);
+  assert.equal(allUsers.terminalPayloadRetentionDays, 0);
+
+  const retained = config({ TERMINAL_PAYLOAD_RETENTION_DAYS: "30" });
+  assert.equal(retained.terminalPayloadRetentionDays, 30);
 
   const noAdminChannels = config({ ADMIN_CHANNELS: "" });
   assert.deepEqual(noAdminChannels.adminChannels, []);

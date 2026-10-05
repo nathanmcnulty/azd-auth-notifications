@@ -20,6 +20,7 @@ export interface Config {
   senderUserId?: string;
   helpdeskText: string;
   overlapMinutes: number;
+  terminalPayloadRetentionDays: number;
 }
 
 export interface Delivery {
@@ -251,6 +252,24 @@ function parseOverlapMinutes(value: string | undefined): number {
   return minutes;
 }
 
+function parseTerminalPayloadRetentionDays(value: string | undefined): number {
+  if (value === undefined || value.trim() === "") {
+    return 0;
+  }
+  if (!/^\d+$/.test(value.trim())) {
+    throw new Error(
+      "TERMINAL_PAYLOAD_RETENTION_DAYS must be an integer from 0 to 36500.",
+    );
+  }
+  const days = Number(value.trim());
+  if (days > 36500) {
+    throw new Error(
+      "TERMINAL_PAYLOAD_RETENTION_DAYS must be an integer from 0 to 36500.",
+    );
+  }
+  return days;
+}
+
 export function parseConfig(env: NodeJS.ProcessEnv): Config {
   const enabled = parseBoolean(
     env.COLLECTION_ENABLED,
@@ -304,6 +323,9 @@ export function parseConfig(env: NodeJS.ProcessEnv): Config {
     ...(senderUserId ? { senderUserId } : {}),
     helpdeskText: parseHelpdeskText(env.HELPDESK_TEXT),
     overlapMinutes: parseOverlapMinutes(env.AUDIT_OVERLAP_MINUTES),
+    terminalPayloadRetentionDays: parseTerminalPayloadRetentionDays(
+      env.TERMINAL_PAYLOAD_RETENTION_DAYS,
+    ),
   };
 }
 

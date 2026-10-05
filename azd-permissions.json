@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0",
+  "solutionId": "azd-auth-notifications",
+  "status": "implemented",
+  "coverage": "partial",
+  "reviewedOn": "2026-10-03",
+  "requirements": [
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "application",
+      "permission": "AuditLog.Read.All",
+      "principal": "workload",
+      "phase": "runtime",
+      "feature": "core",
+      "defaultEnabled": true,
+      "scope": "tenant",
+      "rationale": "Grants used for audit collection and user resolution.",
+      "evidenceState": "code",
+      "evidence": [
+        {
+          "path": "scripts/Configure-Permissions.ps1",
+          "sha256": "68a06d358ea6ff0d1f4bf4de571c0a03b0bfd2323d3c55507071edf94fadf721"
+        }
+      ]
+    },
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "application",
+      "permission": "User.Read.All",
+      "principal": "workload",
+      "phase": "runtime",
+      "feature": "core",
+      "defaultEnabled": true,
+      "scope": "tenant",
+      "rationale": "Grants used for audit collection and user resolution.",
+      "evidenceState": "code",
+      "evidence": [
+        {
+          "path": "scripts/Configure-Permissions.ps1",
+          "sha256": "68a06d358ea6ff0d1f4bf4de571c0a03b0bfd2323d3c55507071edf94fadf721"
+        }
+      ]
+    },
+    {
+      "resource": "exchange-online",
+      "kind": "exchange-rbac",
+      "permission": "Application Mail.Send",
+      "principal": "workload",
+      "phase": "runtime",
+      "feature": "email",
+      "defaultEnabled": false,
+      "scope": "configured-sender-mailbox",
+      "rationale": "Mailbox-scoped Exchange Application RBAC; do not replace with tenant-wide Graph Mail.Send.",
+      "evidenceState": "documented",
+      "evidence": [
+        {
+          "path": "docs/deployment.md",
+          "sha256": "74fab0f4f3b61794ef50871757253c57af776c2ee737bdfe3b852a9e5149dce2"
+        }
+      ]
+    },
+    {
+      "resource": "Azure Storage Table",
+      "kind": "azure-rbac",
+      "permission": "Storage Table Data Reader",
+      "principal": "review-workflow-operator",
+      "phase": "runtime",
+      "feature": "review-list",
+      "defaultEnabled": false,
+      "scope": "AuthNotifications table or its containing storage account",
+      "rationale": "Allows an explicitly authorized operator to list sanitized ambiguous-delivery records without changing state.",
+      "evidenceState": "code",
+      "evidence": [
+        {
+          "path": "scripts/Review-Deliveries.ts",
+          "sha256": "eff8652afa4c7fc81d3785dbb899ca8ffd7045d7b9a5803865f4bdd704d44d1d"
+        }
+      ]
+    },
+    {
+      "resource": "Azure Storage Table",
+      "kind": "azure-rbac",
+      "permission": "Storage Table Data Contributor",
+      "principal": "review-workflow-operator",
+      "phase": "runtime",
+      "feature": "review-decision",
+      "defaultEnabled": false,
+      "scope": "AuthNotifications table or its containing storage account",
+      "rationale": "Allows an explicitly authorized operator to apply one ETag-conditional review decision and create its immutable application audit row.",
+      "evidenceState": "code",
+      "evidence": [
+        {
+          "path": "scripts/Review-Deliveries.ts",
+          "sha256": "eff8652afa4c7fc81d3785dbb899ca8ffd7045d7b9a5803865f4bdd704d44d1d"
+        }
+      ]
+    }
+  ],
+  "gaps": [
+    "Azure RBAC scopes, operator/consent roles, cleanup, and optional connector permissions still need a full review.",
+    "The template does not grant review-workflow operator roles; assignment eligibility, scope, access review, and removal remain deployment prerequisites."
+  ]
+}

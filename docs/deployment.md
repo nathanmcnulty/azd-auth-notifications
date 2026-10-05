@@ -16,7 +16,9 @@ Install Node.js 22+, PowerShell 7, Azure CLI, and azd. Use normal cached/broker/
     azd env set HELPDESK_TEXT "Contact your security helpdesk immediately."
     azd provision
 
-Use a comma-separated list for multiple user IDs. Omit administrator channels/IDs to disable admin notifications. The interactive hook prompts for missing channel selections. Configuration can also be supplied ahead of time for CI. COLLECTION_ENABLED defaults false. ALL_USERS defaults false.
+Use a comma-separated list for multiple user IDs. Omit administrator channels/IDs to disable admin notifications. The interactive hook prompts for missing channel selections. Configuration can also be supplied ahead of time for CI. COLLECTION_ENABLED defaults false. ALL_USERS defaults false. TERMINAL_PAYLOAD_RETENTION_DAYS defaults to 0, which disables automatic payload compaction.
+
+After approving a retention period, set `TERMINAL_PAYLOAD_RETENTION_DAYS` from 1 through 36500 and reprovision. This removes old terminal delivery details while keeping permanent deduplication tombstones. See [operations](operations.md) before enabling it.
 
 The template creates a resource group, Flex Consumption Function, user-assigned identity, storage, workspace, Application Insights, and a Teams bot only when Teams is selected. Review Azure region availability, pricing, and tenant licensing before broader deployment. Polling requires available Entra audit retention and Graph access; email recipients/sender need Exchange mailboxes and Teams recipients need Teams service access.
 
@@ -62,7 +64,7 @@ The package requires valid public developer/privacy/terms URLs supplied by the a
     azd deploy
 
 This repository vendors the reviewed `notification-contracts@1.0.0` and
-`deployment-validation@1.0.0` components from `azd-reference`. The exact source
+`deployment-validation@1.1.1` components from `azd-reference`. The exact source
 revisions and file hashes are recorded in `azd-components.lock.json`; deployment
 does not fetch components at runtime. Keep solution-specific detection, routing,
 Bot Service lifecycle, and delivery state in this repository.
