@@ -174,7 +174,7 @@ Review AUTH-009 against the current repository state. Its status or authorizatio
 
 - **Kind:** discovery
 - **Priority:** P2
-- **Status:** proposed
+- **Status:** done
 - **Wave:** 1
 - **Authorization:** local-only
 - **Blocker:** _none_
@@ -216,7 +216,10 @@ The solution already owns recipient routing and durable table state; only hostin
 
 **Evidence:**
 
-- _none_
+- Source-backed offline compatibility assessment on 2026-10-10 at Auth main 016a9ded4b9777c95a975b271fb678a8d84ef615&colon; docs/flex-host-assessment.md compares the existing host with Flex pilot 0.1.0 at exact immutable Reference revision a79ed9ab9ae2ec10ff3d3c50a011d878c9524592. The complete component directory is unchanged through inspected Reference main 77b5f83468b0d60d534efd4a52ca389a77e37637.
+- Decision&colon; defer adoption. The candidate enables shared-key host/package storage, creates a system-assigned Function identity and provisions Blob-only state authority, while current Auth disables shared keys, uses a stable user-assigned identity and requires Blob/Queue/Table authority and durable Table client state. The assessment records exact source links, the evaluated candidate pin and prerequisites for a later compatible component; no pin is added to the lock and no host migration occurs.
+- Recipient policies, pilot scope, explicit collection activation, Table schemas/state, existing telemetry and identity bindings remain solution-owned and unchanged. No Log Analytics dependency, permission assignment, runtime change, Azure mutation, authentication or delivery is introduced. This assessment completes AUTH-008 discovery acceptance; AUTH-002 live acceptance remains proposed.
+- Registered ./scripts/Test-Repository.ps1 passed with PowerShell 7.6.6, Node runtime tests 55 passed with zero failed/skipped, TypeScript build, Bicep 0.46.1 compile and Git whitespace. The pinned Bicep binary was copied into task-private Azure CLI config; no default Azure context was changed. Canonical backlog schema and generated review view checks passed.
 
 **Review and authorization note:**
 

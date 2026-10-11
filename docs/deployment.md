@@ -2,7 +2,10 @@
 
 ## Configure
 
-Install Node.js 22+, PowerShell 7, Azure CLI, and azd. Use normal cached/broker/browser login when needed. Clone this repository, then run npm ci.
+Install Node.js 22+, PowerShell 7.6+, Azure CLI, and azd. Use normal cached/broker/browser login when needed. Clone this repository, then run npm ci.
+
+The [shared Flex host assessment](flex-host-assessment.md) records why the current
+pilot is deferred to preserve identity-only storage and durable Table state.
 
     azd env new auth-notifications
     azd env set AZURE_TENANT_ID <tenant-guid>
