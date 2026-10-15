@@ -516,10 +516,10 @@ Review AUTH-007 against the current repository state. Its status or authorizatio
 
 - **Kind:** discovery
 - **Priority:** P2
-- **Status:** proposed
+- **Status:** blocked
 - **Wave:** 3
 - **Authorization:** local-only
-- **Blocker:** _none_
+- **Blocker:** Microsoft has announced standalone ACS retirement on 2028-09-30 with onboarding restrictions beginning 2026-10-23. ACS is not asserted to be unavailable today, but accepting its finite lifecycle and migration cost requires an explicit product decision; a replacement-provider decision is also required before transport, permission or state design can satisfy the original acceptance.
 - **Claim:** _none_
 
 **Problem:**
@@ -557,7 +557,9 @@ ACS is requested in the legacy roadmap but transport, destinations and operation
 
 **Evidence:**
 
-- _none_
+- The retirement assessment in docs/acs-transport-design.md reviewed Microsoft&#39;s official ACS retirement notice on 2026-10-15&colon; standalone ACS retirement is announced for 2028-09-30, with Email and SMS explicitly impacted and onboarding restrictions beginning 2026-10-23.
+- No ACS dependency is added. Existing Graph email and Teams routes remain unchanged; no ACS resource, phone number, domain, role, Event Grid subscription, secret, authentication, provider request or recipient delivery was performed.
+- A replacement SMS provider has not been selected. Approved recipient authority, independent audience choices, stable logical-route deduplication and provider-attempt evidence remain required before a future provider can satisfy the original acceptance.
 
 **Review and authorization note:**
 

@@ -194,6 +194,8 @@
   ],
   "gaps": [
     "Azure RBAC scopes, operator/consent roles, cleanup, and optional connector permissions still need a full review.",
-    "The template does not grant review-workflow operator roles; assignment eligibility, scope, access review, and removal remain deployment prerequisites."
+    "The template does not grant review-workflow operator roles; assignment eligibility, scope, access review, and removal remain deployment prerequisites.",
+    "AUTH-003 is blocked by Microsoft's announced ACS standalone retirement and onboarding restrictions; no ACS or replacement-provider permissions are approved or added. Existing mailbox-scoped email and Teams permissions remain unchanged.",
+    "SMS replacement-provider selection and an approved E.164 recipient registry remain unresolved. Do not use Graph mobilePhone, a newly registered method, or add SMS, phone-number, Event Grid, secret or provider permissions until a separately approved design identifies exact resource-scoped actions."
   ]
 }

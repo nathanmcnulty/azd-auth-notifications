@@ -10,7 +10,12 @@ Independent end-user and optional administrator channel selection; successful re
 
 ## Azure Communication Services
 
-Add ACS as a selectable transport for both end users and administrators. Determine the initial service (email and/or SMS), approved recipient sources, sender/domain or phone-number requirements, regional rules, opt-in, costs, and delivery receipts before implementation. Never derive destinations from a newly registered method.
+AUTH-003 is blocked pending a product decision on Microsoft's ACS retirement and
+finite lifecycle; the assessment is recorded in [acs-transport-design.md](acs-transport-design.md).
+Keep the existing Graph email and Teams routes. Select a replacement provider
+separately before changing transport, permissions or state, with explicit
+per-audience opt-in and approved destination state. Never derive destinations
+from a newly registered method.
 
 ## Operational improvements
 
