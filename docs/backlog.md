@@ -458,11 +458,14 @@ Review AUTH-006 against the current repository state. Its status or authorizatio
 
 - **Kind:** maintenance
 - **Priority:** P2
-- **Status:** proposed
+- **Status:** in-progress
 - **Wave:** 2
 - **Authorization:** local-only
 - **Blocker:** _none_
-- **Claim:** _none_
+- **Claim owner:** /root/auth&lowbar;teams&lowbar;lifecycle&lowbar;impl
+- **Claim worktree:** C&colon;&bsol;azd-reconciliation-20261015&bsol;auth-teams-lifecycle
+- **Claim base revision:** `549f5a02443b9c82ada2010a776a6958f76eb036`
+- **Claim started:** 10/15/2026 17&colon;15&colon;47
 
 **Problem:**
 
@@ -473,6 +476,9 @@ Teams lifecycle improvements are requested while central extraction is still def
 - src/
 - tests/
 - docs/operations.md
+- scripts/Install-TeamsApp.ps1
+- scripts/Remove-TeamsApp.ps1 and a solution-local lifecycle module if needed
+- azd-permissions.json and registered offline validation wiring
 
 **Acceptance:**
 
@@ -498,7 +504,9 @@ Teams lifecycle improvements are requested while central extraction is still def
 
 **Evidence:**
 
-- _none_
+- Solution-local lifecycle hardening uses exact opaque catalog and installation receipts. Installer reruns resolve only the recorded personal-installation resource; response-attributed creates checkpoint the exact ID as create-attributed-pending and a visibility retry polls only that ID before recording created. The documented 201 response with no identity becomes create-unattributed. Conflicts, non-policy errors and exhausted policy retries become create-unproven. Both unproven states require explicit adoption as adopted, never created. Ambiguous or foreign resources, tenant/user/catalog/version mismatches and incomplete or uncertain ownership fail closed.
+- Manual removal is limited to the exact personal installation with a complete created receipt for the same deployment and pilot. Structured HTTP 404 plus an expected Graph not-found error code is required as absence proof; DNS, timeout and unstructured text are rejected. An exact tenant/deployment-bound checkpoint progresses from delete-pending to absence-verified, allowing interrupted local receipt cleanup to resume without another delete. The installer refuses to run until that cleanup finishes, and recovery refuses any newly substituted receipt. Adopted or unproven installations and every tenant-wide catalog object are retained. No Microsoft authentication, Graph/Azure operation, assignment, send, resource mutation or delivery claim was performed; shared extraction remains deferred pending two real consumer delivery proofs.
+- Registered offline validation passed with 64-bit PowerShell 7.6.6 and Pester 5.7.1&colon; 21/21 lifecycle tests, 55/55 Node tests, npm audit with zero vulnerabilities, TypeScript build, pinned Bicep 0.46.1 compilation and Git whitespace checks. Permission/backlog schemas, generated Markdown and PowerShell parsing also pass.
 
 **Review and authorization note:**
 

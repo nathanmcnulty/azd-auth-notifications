@@ -21,6 +21,7 @@ function Invoke-CheckedCommand {
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
 Push-Location $repositoryRoot
 try {
+    & (Join-Path $PSScriptRoot 'Test-TeamsLifecycle.ps1') | Out-Null
     Invoke-CheckedCommand -Command 'npm' -Arguments @('ci')
     Invoke-CheckedCommand -Command 'npm' -Arguments @('test')
     Invoke-CheckedCommand -Command 'npm' -Arguments @('run', 'build')
