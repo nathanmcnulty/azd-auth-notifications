@@ -21,3 +21,18 @@ jobs:
       - run: npm run build
       - run: az bicep build --file infra/main.bicep --stdout > /dev/null
       - run: git diff --check
+  powershell:
+    name: PowerShell 7.6 lifecycle
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pinned PowerShell and Pester
+        shell: pwsh
+        run: |
+          dotnet tool install --tool-path .tools/pwsh PowerShell --version 7.6.0
+          & .tools/pwsh/pwsh -NoLogo -NoProfile -Command 'Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force'
+      - name: Test Teams lifecycle
+        shell: pwsh
+        run: |
+          & .tools/pwsh/pwsh -NoLogo -NoProfile -File scripts/Test-TeamsLifecycle.ps1

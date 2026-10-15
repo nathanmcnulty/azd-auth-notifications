@@ -3,7 +3,7 @@
   "solutionId": "azd-auth-notifications",
   "status": "implemented",
   "coverage": "partial",
-  "reviewedOn": "2026-10-03",
+  "reviewedOn": "2026-10-15",
   "requirements": [
     {
       "resource": "https://graph.microsoft.com",
@@ -94,6 +94,102 @@
           "sha256": "eff8652afa4c7fc81d3785dbb899ca8ffd7045d7b9a5803865f4bdd704d44d1d"
         }
       ]
+    },
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "delegated",
+      "permission": "AppCatalog.ReadWrite.All",
+      "principal": "teams-lifecycle-operator",
+      "phase": "deployment",
+      "feature": "teams-onboarding",
+      "defaultEnabled": false,
+      "scope": "tenant Teams app catalog",
+      "rationale": "Allows an explicitly authorized administrator to publish or update the reviewed package and verify its exact catalog object during optional pilot onboarding.",
+      "evidenceState": "code",
+      "evidence": [{
+        "path": "scripts/Install-TeamsApp.ps1",
+        "sha256": "4f6625f8ef95ecfab8cca45b3f12f4ecb3b4d90830831564236627918eab6db6"
+      }]
+    },
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "delegated",
+      "permission": "TeamsAppInstallation.ReadWriteForUser",
+      "principal": "teams-lifecycle-operator",
+      "phase": "deployment",
+      "feature": "teams-onboarding",
+      "defaultEnabled": false,
+      "scope": "explicit PILOT_USER_IDS member",
+      "rationale": "Allows an explicitly authorized administrator to create and verify the exact personal installation for one configured pilot.",
+      "evidenceState": "code",
+      "evidence": [{
+        "path": "scripts/Install-TeamsApp.ps1",
+        "sha256": "4f6625f8ef95ecfab8cca45b3f12f4ecb3b4d90830831564236627918eab6db6"
+      }]
+    },
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "delegated",
+      "permission": "User.Read",
+      "principal": "teams-lifecycle-operator",
+      "phase": "deployment",
+      "feature": "teams-onboarding",
+      "defaultEnabled": false,
+      "scope": "signed-in administrator",
+      "rationale": "Supports the normal broker or browser administrator context used by optional pilot onboarding.",
+      "evidenceState": "code",
+      "evidence": [{
+        "path": "scripts/Install-TeamsApp.ps1",
+        "sha256": "4f6625f8ef95ecfab8cca45b3f12f4ecb3b4d90830831564236627918eab6db6"
+      }]
+    },
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "delegated",
+      "permission": "AppCatalog.ReadWrite.All",
+      "principal": "teams-lifecycle-operator",
+      "phase": "cleanup",
+      "feature": "teams-removal",
+      "defaultEnabled": false,
+      "scope": "exact recorded tenant Teams catalog object",
+      "rationale": "Preserves the installer's existing delegated scope while removal reads and validates the exact catalog object; removal never deletes the catalog object.",
+      "evidenceState": "code",
+      "evidence": [{
+        "path": "scripts/Remove-TeamsApp.ps1",
+        "sha256": "05dba74a5185f2aeb45f43eae4a9782b1d2a7f299dcfb1a02464d3e42c7fc3b6"
+      }]
+    },
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "delegated",
+      "permission": "TeamsAppInstallation.ReadWriteForUser",
+      "principal": "teams-lifecycle-operator",
+      "phase": "cleanup",
+      "feature": "teams-removal",
+      "defaultEnabled": false,
+      "scope": "exact recorded personal installation for an explicit PILOT_USER_IDS member",
+      "rationale": "Allows an explicitly authorized administrator to verify, delete, and confirm absence of only the created installation recorded by this environment.",
+      "evidenceState": "code",
+      "evidence": [{
+        "path": "scripts/Remove-TeamsApp.ps1",
+        "sha256": "05dba74a5185f2aeb45f43eae4a9782b1d2a7f299dcfb1a02464d3e42c7fc3b6"
+      }]
+    },
+    {
+      "resource": "https://graph.microsoft.com",
+      "kind": "delegated",
+      "permission": "User.Read",
+      "principal": "teams-lifecycle-operator",
+      "phase": "cleanup",
+      "feature": "teams-removal",
+      "defaultEnabled": false,
+      "scope": "signed-in administrator",
+      "rationale": "Supports the normal broker or browser administrator context used by optional ownership-bound removal.",
+      "evidenceState": "code",
+      "evidence": [{
+        "path": "scripts/Remove-TeamsApp.ps1",
+        "sha256": "05dba74a5185f2aeb45f43eae4a9782b1d2a7f299dcfb1a02464d3e42c7fc3b6"
+      }]
     }
   ],
   "gaps": [
