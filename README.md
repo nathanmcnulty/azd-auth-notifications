@@ -4,7 +4,7 @@ Notify affected users when a new Microsoft Entra authentication method is regist
 
 ## Status
 
-Initial implementation under dev-tenant validation; not a production-validated release. Azure Communication Services is on the [roadmap](docs/roadmap.md) for both audiences.
+Initial implementation under dev-tenant validation; not a production-validated release.
 
 ## Behavior
 

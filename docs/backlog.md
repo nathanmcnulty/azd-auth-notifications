@@ -512,14 +512,14 @@ Teams lifecycle improvements are requested while central extraction is still def
 
 Review AUTH-007 against the current repository state. Its status or authorization class is not eligible for an actionable generated handoff. Do not claim or execute it without explicit selection, satisfied dependencies, and every required authorization. Never interpret this generated view as approval.
 
-## AUTH-003: Design Azure Communication Services transport for both audiences
+## AUTH-003: Withdrawn&colon; Design Azure Communication Services transport for both audiences
 
 - **Kind:** discovery
 - **Priority:** P2
-- **Status:** blocked
+- **Status:** deferred
 - **Wave:** 3
 - **Authorization:** local-only
-- **Blocker:** Microsoft has announced standalone ACS retirement on 2028-09-30 with onboarding restrictions beginning 2026-10-23. ACS is not asserted to be unavailable today, but accepting its finite lifecycle and migration cost requires an explicit product decision; a replacement-provider decision is also required before transport, permission or state design can satisfy the original acceptance.
+- **Blocker:** _none_
 - **Claim:** _none_
 
 **Problem:**
@@ -560,6 +560,8 @@ ACS is requested in the legacy roadmap but transport, destinations and operation
 - The retirement assessment in docs/acs-transport-design.md reviewed Microsoft&#39;s official ACS retirement notice on 2026-10-15&colon; standalone ACS retirement is announced for 2028-09-30, with Email and SMS explicitly impacted and onboarding restrictions beginning 2026-10-23.
 - No ACS dependency is added. Existing Graph email and Teams routes remain unchanged; no ACS resource, phone number, domain, role, Event Grid subscription, secret, authentication, provider request or recipient delivery was performed.
 - A replacement SMS provider has not been selected. Approved recipient authority, independent audience choices, stable logical-route deduplication and provider-attempt evidence remain required before a future provider can satisfy the original acceptance.
+- Maintainer decision on 2026-10-15&colon; withdraw this unimplemented transport proposal and remove the option and current design references. No replacement provider is requested. This deferred record retains the original acceptance and historical assessment for audit; it does not schedule future implementation.
+- The removed assessment remains in Git history at https&colon;//github.com/nathanmcnulty/azd-auth-notifications/blob/a8578f8b1f99ca5760f8e470fc6b1169cf763187/docs/acs-transport-design.md. The supported Graph email and personal Teams routes, runtime, infrastructure, environment variables, managed-component pins and granted-permission declarations are unchanged.
 
 **Review and authorization note:**
 
