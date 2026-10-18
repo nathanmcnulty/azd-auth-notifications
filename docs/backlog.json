@@ -231,7 +231,7 @@
         "docs/roadmap.md"
       ],
       "evidence": [
-        "2026-10-18 bounded read-only inventory in the approved lab tenant: a seven-day directory-audit query for the Add Passkey activity prefix, capped at 50 events, returned four successful Add Passkey (device-bound) events and no continuation page. Only activity/result counts were retained. This supplied no additional observed activity variant; it does not cover administrator activities with different names or older records, prove synced-passkey coverage, or establish global absence. Real sanitized paired/unpaired samples are still required before extending supported methods; AUTH-006 remains proposed. No registration, permission grant or notification send was performed."
+        "2026-10-18 bounded read-only inventory in the approved lab tenant: a seven-day directory-audit query for the Add Passkey activity prefix, capped at 50 events, returned four successful Add Passkey (device-bound) events and no continuation page. The validation artifact contains only activity/result counts; no raw audit record was added to the repository or artifact files. This supplied no additional observed activity variant; it does not cover administrator activities with different names or older records, prove synced-passkey coverage, or establish global absence. Real sanitized paired/unpaired samples are still required before extending supported methods; AUTH-006 remains proposed. No registration, permission grant or notification send was performed."
       ],
       "blocker": null
     },
