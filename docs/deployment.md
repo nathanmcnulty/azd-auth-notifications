@@ -99,3 +99,25 @@ With collection disabled and an explicit pilot configured, run scripts/Test-Noti
 For direct API use, POST to /api/test-delivery with a Function key in the x-functions-key header and JSON body containing userId. Only a configured pilot user is accepted; channels and administrator destinations come from deployment configuration. This creates labeled synthetic delivery records and can send real notifications. It cannot accept arbitrary recipients or run while collection is enabled. Confirm receipt separately from an accepted provider result.
 
 For a read-only audit replay, set AZURE_TENANT_ID and optionally AUDIT_INSPECTION_HOURS (1 through 168), then run npx tsx scripts/Inspect-Audits.ts. Output is aggregate counts; it does not send notifications or store raw audit records.
+
+## Contributor validation
+
+Use PowerShell 7.6+, Node.js 22+ and Pester 6.2.0:
+
+```powershell
+Install-Module Pester -RequiredVersion 6.2.0 -Scope CurrentUser -Force
+./scripts/Test-Repository.ps1
+```
+
+The registered lifecycle runner imports the exact Pester version for both local
+and CI execution, logs the actual runtime/module versions and requires every
+selected test to pass. The repository validator also runs the Node tests, build,
+Bicep compile and whitespace check. Windows CI verifies the official PowerShell
+7.6.6 archive hash before using that runtime; its initial runner shell only
+bootstraps the verified archive.
+
+The immutable deployment-validation 1.1.1 bundle at Reference revision
+`0c96cc89c554ffc3b3ca82ceda12da6591e816c1` retains its upstream 7.2 manifest
+minimum. That frozen metadata does not change this repository's supported 7.6+
+requirement. Refresh component bytes only through a reviewed canonical release
+and lock update; never hand-edit the vendored module.

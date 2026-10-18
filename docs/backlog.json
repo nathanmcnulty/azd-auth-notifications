@@ -389,6 +389,47 @@
         "Verified issue #7 closed and PR #8 merged 2026-10-03 at c60ef82114cebd7885bed02a726140b21904f5a6: https://github.com/nathanmcnulty/azd-auth-notifications/pull/8. Separate quality task owns the fix and required validation-check repair. This is remote-main resolution; the canonical permission-tracking checkout has not been reset or pulled over local work."
       ],
       "blocker": null
+    },
+    {
+      "id": "AUTH-011",
+      "title": "Complete the supported authoring and lifecycle test baseline",
+      "kind": "maintenance",
+      "priority": "P1",
+      "status": "done",
+      "wave": 0,
+      "problem": "Owned authoring entrypoints did not consistently declare PowerShell 7.6, while the lifecycle runner and Windows CI selected Pester 5.7.1.",
+      "scope": [
+        "Owned root PowerShell scripts/modules and current prerequisites",
+        "Windows CI verified runtime and lifecycle runner version selection",
+        "Contributor validation guidance and source-evidence byte policy"
+      ],
+      "acceptance": [
+        "All owned root PowerShell entrypoints require 7.6+; local and CI lifecycle checks import exact Pester 6.2.0.",
+        "Preserve every existing lifecycle assertion, no-omission result gate and ownership/removal boundary.",
+        "Preserve runtime TypeScript, package locks, component/vendor bytes, notification semantics and the separate ACS-removal draft."
+      ],
+      "validation": [
+        "./scripts/Test-Repository.ps1",
+        "Profile the actual Test-TeamsLifecycle.ps1 runner and record runtime, module and complete-result counts.",
+        "Parse PowerShell; verify canonical permission/backlog schemas, locked component hashes and generated backlog.",
+        "Check a fresh core.autocrlf=true index export against locked component and permission-source hashes."
+      ],
+      "dependencies": [],
+      "authorization": "local-only",
+      "components": [
+        "deployment-validation"
+      ],
+      "sources": [
+        "https://github.com/nathanmcnulty/azd-auth-notifications/issues/17"
+      ],
+      "evidence": [
+        "Rechecked current main a8578f8b1f99ca5760f8e470fc6b1169cf763187 and ACS-removal draft #16 at 0e265d77b8961de464a5af433f916113ef692cb1 before editing. AUTH-011 is unused in both backlogs. All 13 owned root PowerShell files now declare 7.6 (12 added guards). Windows CI selects the previously reviewed official PowerShell 7.6.6 x64 ZIP with exact SHA-256 and uses exact Pester 6.2.0; the initial runner shell only bootstraps that archive.",
+        "The complete registered validator passes locally on PowerShell 7.6.6/.NET 10.0.12/Pester 6.2.0, Node 26.7.0/npm 11.19.0: 21/21 lifecycle tests and 55/55 Node tests with zero failures or omissions, TypeScript typecheck/build, Bicep 0.42.1 compile and whitespace checks. A separate profiling invocation passes the same 21 tests in 11.39 seconds total runner wall time. The existing strict PassedCount=TotalCount, failed-block/container and NotRun checks remain byte-identical. CI retains Node 22 for its independent hosted proof.",
+        "Component locks and vendor bytes remain unchanged, including the immutable upstream deployment-validation 1.1.1 manifest minimum 7.2, explicitly classified as frozen metadata. Source-backed permission metadata changes only hashes after declarations/documentation; LF checkout rules stabilize all affected evidence sources. No tests, TypeScript behavior, permissions, package lock, infrastructure or ACS-removal branch changed. No live authentication, Graph/Azure operation, delivery, Teams installation or tenant cleanup ran; AUTH-002/006/007 live and sample gates remain open.",
+        "A fresh core.autocrlf=true index export matches every locked component and source-evidence SHA-256, including unchanged Review-Deliveries.ts; scoped LF policy changes no canonical source bytes. All lifecycle acceptance assertions and the existing complete-result gate are retained without a compatibility fallback."
+      ],
+      "blocker": null,
+      "claim": null
     }
   ]
 }

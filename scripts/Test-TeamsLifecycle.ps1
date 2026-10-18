@@ -21,7 +21,8 @@ $resolvedPaths = foreach ($testPath in $Path) {
 }
 if (@($resolvedPaths).Count -eq 0) { throw 'No Teams lifecycle test files were selected.' }
 
-Import-Module Pester -RequiredVersion 5.7.1 -Force -ErrorAction Stop
+Import-Module Pester -RequiredVersion 6.2.0 -Force -ErrorAction Stop
+Write-Host "PowerShell $($PSVersionTable.PSVersion); .NET $([Environment]::Version); Pester $((Get-Module Pester).Version)"
 $result = Invoke-Pester -Path $resolvedPaths -Output Detailed -PassThru -ErrorAction Stop
 if ($null -eq $result -or $result.TotalCount -le 0 -or $result.Result -ne 'Passed' -or
     $result.PassedCount -ne $result.TotalCount -or $result.FailedCount -ne 0 -or

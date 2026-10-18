@@ -21,7 +21,7 @@ A Node.js Azure Function polls Graph audit logs every five minutes and persists 
 
 ## Development
 
-Requires Node.js 22+, PowerShell 7, Azure CLI, Azure Developer CLI, and Bicep via Azure CLI.
+Requires Node.js 22+, PowerShell 7.6+, Azure CLI, Azure Developer CLI, and Bicep via Azure CLI.
 
     npm ci
     npm test
