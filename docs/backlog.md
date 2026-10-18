@@ -514,14 +514,11 @@ Review AUTH-006 against the current repository state. Its status or authorizatio
 
 - **Kind:** maintenance
 - **Priority:** P2
-- **Status:** in-progress
+- **Status:** done
 - **Wave:** 2
 - **Authorization:** local-only
 - **Blocker:** _none_
-- **Claim owner:** /root/auth&lowbar;teams&lowbar;lifecycle&lowbar;impl
-- **Claim worktree:** C&colon;&bsol;azd-reconciliation-20261015&bsol;auth-teams-lifecycle
-- **Claim base revision:** `549f5a02443b9c82ada2010a776a6958f76eb036`
-- **Claim started:** 10/15/2026 17&colon;15&colon;47
+- **Claim:** _none_
 
 **Problem:**
 
@@ -563,6 +560,8 @@ Teams lifecycle improvements are requested while central extraction is still def
 - Solution-local lifecycle hardening uses exact opaque catalog and installation receipts. Installer reruns resolve only the recorded personal-installation resource; response-attributed creates checkpoint the exact ID as create-attributed-pending and a visibility retry polls only that ID before recording created. The documented 201 response with no identity becomes create-unattributed. Conflicts, non-policy errors and exhausted policy retries become create-unproven. Both unproven states require explicit adoption as adopted, never created. Ambiguous or foreign resources, tenant/user/catalog/version mismatches and incomplete or uncertain ownership fail closed.
 - Manual removal is limited to the exact personal installation with a complete created receipt for the same deployment and pilot. Structured HTTP 404 plus an expected Graph not-found error code is required as absence proof; DNS, timeout and unstructured text are rejected. An exact tenant/deployment-bound checkpoint progresses from delete-pending to absence-verified, allowing interrupted local receipt cleanup to resume without another delete. The installer refuses to run until that cleanup finishes, and recovery refuses any newly substituted receipt. Adopted or unproven installations and every tenant-wide catalog object are retained. No Microsoft authentication, Graph/Azure operation, assignment, send, resource mutation or delivery claim was performed; shared extraction remains deferred pending two real consumer delivery proofs.
 - Registered offline validation passed with 64-bit PowerShell 7.6.6 and Pester 5.7.1&colon; 21/21 lifecycle tests, 55/55 Node tests, npm audit with zero vulnerabilities, TypeScript build, pinned Bicep 0.46.1 compilation and Git whitespace checks. Permission/backlog schemas, generated Markdown and PowerShell parsing also pass.
+- 2026-10-18 reconciliation&colon; the lifecycle implementation was merged as PR &num;14 &lpar;merge 8abd6fc1ef3df67a150fad1d4f1cd633596048b4&rpar;, is retained in current main a8578f8b1f99ca5760f8e470fc6b1169cf763187, and remains in supported-baseline draft &num;18 at f578bfadc197c12298e8b6213da78de6c0ea18ba. The old implementation worktree is absent from current worktree inventory and its agent claim is stale. Clear that claim and complete this bounded source-preparation item; no implementation, permissions or deployed state change.
+- Current registered lifecycle validation on PowerShell 7.6.6/.NET 10.0.12/Pester 6.2.0 passes all 21 tests without omissions. Existing actual-script and module fixtures cover exact catalog/installation propagation retries, foreign installations, tenant mismatch, attributed versus adopted ownership, delete/readback ordering and interrupted receipt-cleanup recovery. All six hosted checks on the unchanged baseline draft head passed, including both registered validation jobs. Source preparation is complete; AUTH-002 real registration/recipient-visible delivery and the two-consumer proof required before shared extraction remain open. No authentication, Graph/Azure operation, installation, removal or send ran during this reconciliation.
 
 **Review and authorization note:**
 
