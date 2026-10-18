@@ -57,7 +57,7 @@ Plans and implementation evidence are spread across files; the captured source c
 
 **Evidence:**
 
-- Reconciled the reviewed preservation tip 8254348637b7ca8b952ce49dfa98a071503fb934 against freshly fetched origin/main c60ef82114cebd7885bed02a726140b21904f5a6. The fresh main is the exact second parent of the preservation merge, so its reviewed Graph retry changes were retained while the local-only retention, component-upgrade and operator-review packets were restored without copying the dirty canonical checkout.
+- Reconciled the reviewed preservation tip 8254348637b7ca8b952ce49dfa98a071503fb934 against freshly fetched origin/main c60ef82114cebd7885bed02a726140b21904f5a6. The fresh main is the preservation merge&#39;s exact second parent, so its reviewed Graph retry changes were retained while the local-only retention, component-upgrade and operator-review packets were restored without copying the dirty canonical checkout.
 - Current source, six worktrees, active issue &num;9 and pull requests were inspected read-only on 2026-10-04&colon; no pull request is open, and issue &num;9 still tracks recipient-visible notification acceptance plus remaining roadmap work. AUTH-002, AUTH-003, AUTH-006, AUTH-007 and AUTH-008 therefore remain proposed; AUTH-004, AUTH-005, AUTH-009 and AUTH-010 retain their reviewed completion evidence.
 - Exact offline repository validation on the reconciled staged tree passed 55/55 tests, npm audit with zero findings, typecheck/build, Bicep compilation, managed-component drift, permission/backlog schemas, generated-backlog check and Git diff checks. The retained nine-assertion Azure Table proof applies only because its five proof-bound product files are byte-identical; no new cloud operation, notification delivery or human-receipt validation was performed.
 
@@ -613,7 +613,7 @@ ACS is requested in the legacy roadmap but transport, destinations and operation
 
 **Evidence:**
 
-- The retirement assessment in docs/acs-transport-design.md reviewed the official Microsoft ACS retirement notice on 2026-10-15&colon; standalone ACS retirement is announced for 2028-09-30, with Email and SMS explicitly impacted and onboarding restrictions beginning 2026-10-23.
+- The retirement assessment in docs/acs-transport-design.md reviewed Microsoft&#39;s official ACS retirement notice on 2026-10-15&colon; standalone ACS retirement is announced for 2028-09-30, with Email and SMS explicitly impacted and onboarding restrictions beginning 2026-10-23.
 - No ACS dependency is added. Existing Graph email and Teams routes remain unchanged; no ACS resource, phone number, domain, role, Event Grid subscription, secret, authentication, provider request or recipient delivery was performed.
 - A replacement SMS provider has not been selected. Approved recipient authority, independent audience choices, stable logical-route deduplication and provider-attempt evidence remain required before a future provider can satisfy the original acceptance.
 
