@@ -504,7 +504,7 @@ Synced passkeys and administrator registration are not established by current sa
 
 **Evidence:**
 
-- _none_
+- 2026-10-18 bounded read-only inventory in the approved lab tenant&colon; a seven-day directory-audit query for the Add Passkey activity prefix, capped at 50 events, returned four successful Add Passkey &lpar;device-bound&rpar; events and no continuation page. Only activity/result counts were retained. This supplied no additional observed activity variant; it does not cover administrator activities with different names or older records, prove synced-passkey coverage, or establish global absence. Real sanitized paired/unpaired samples are still required before extending supported methods; AUTH-006 remains proposed. No registration, permission grant or notification send was performed.
 
 **Review and authorization note:**
 
