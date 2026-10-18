@@ -19,7 +19,7 @@
       "evidence": [
         {
           "path": "scripts/Configure-Permissions.ps1",
-          "sha256": "68a06d358ea6ff0d1f4bf4de571c0a03b0bfd2323d3c55507071edf94fadf721"
+          "sha256": "79154d66163e7660fa2c2120ab9c6d5f10152068f61ea72623f5cf32992b45e0"
         }
       ]
     },
@@ -37,7 +37,7 @@
       "evidence": [
         {
           "path": "scripts/Configure-Permissions.ps1",
-          "sha256": "68a06d358ea6ff0d1f4bf4de571c0a03b0bfd2323d3c55507071edf94fadf721"
+          "sha256": "79154d66163e7660fa2c2120ab9c6d5f10152068f61ea72623f5cf32992b45e0"
         }
       ]
     },
@@ -55,7 +55,7 @@
       "evidence": [
         {
           "path": "docs/deployment.md",
-          "sha256": "74fab0f4f3b61794ef50871757253c57af776c2ee737bdfe3b852a9e5149dce2"
+          "sha256": "36a7341889b4cb13ae9b410f991d2258d0bddc9cc9157cea9ad1149707a4deb0"
         }
       ]
     },
@@ -108,7 +108,7 @@
       "evidenceState": "code",
       "evidence": [{
         "path": "scripts/Install-TeamsApp.ps1",
-        "sha256": "4f6625f8ef95ecfab8cca45b3f12f4ecb3b4d90830831564236627918eab6db6"
+        "sha256": "44a3cd4f4f45d93d91d5dcf4a85fa628833d74bae8503106425a831523653ee8"
       }]
     },
     {
@@ -124,7 +124,7 @@
       "evidenceState": "code",
       "evidence": [{
         "path": "scripts/Install-TeamsApp.ps1",
-        "sha256": "4f6625f8ef95ecfab8cca45b3f12f4ecb3b4d90830831564236627918eab6db6"
+        "sha256": "44a3cd4f4f45d93d91d5dcf4a85fa628833d74bae8503106425a831523653ee8"
       }]
     },
     {
@@ -140,7 +140,7 @@
       "evidenceState": "code",
       "evidence": [{
         "path": "scripts/Install-TeamsApp.ps1",
-        "sha256": "4f6625f8ef95ecfab8cca45b3f12f4ecb3b4d90830831564236627918eab6db6"
+        "sha256": "44a3cd4f4f45d93d91d5dcf4a85fa628833d74bae8503106425a831523653ee8"
       }]
     },
     {
@@ -156,7 +156,7 @@
       "evidenceState": "code",
       "evidence": [{
         "path": "scripts/Remove-TeamsApp.ps1",
-        "sha256": "05dba74a5185f2aeb45f43eae4a9782b1d2a7f299dcfb1a02464d3e42c7fc3b6"
+        "sha256": "521a81ff3571e5551282b60a393a39c34231db507622c2e2857920a8a0ed3b2b"
       }]
     },
     {
@@ -172,7 +172,7 @@
       "evidenceState": "code",
       "evidence": [{
         "path": "scripts/Remove-TeamsApp.ps1",
-        "sha256": "05dba74a5185f2aeb45f43eae4a9782b1d2a7f299dcfb1a02464d3e42c7fc3b6"
+        "sha256": "521a81ff3571e5551282b60a393a39c34231db507622c2e2857920a8a0ed3b2b"
       }]
     },
     {
@@ -188,7 +188,7 @@
       "evidenceState": "code",
       "evidence": [{
         "path": "scripts/Remove-TeamsApp.ps1",
-        "sha256": "05dba74a5185f2aeb45f43eae4a9782b1d2a7f299dcfb1a02464d3e42c7fc3b6"
+        "sha256": "521a81ff3571e5551282b60a393a39c34231db507622c2e2857920a8a0ed3b2b"
       }]
     }
   ],

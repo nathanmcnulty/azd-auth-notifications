@@ -4,3 +4,6 @@ contracts/notifications/** text eol=lf
 infra/main.json text eol=lf
 scripts/Install-TeamsApp.ps1 text eol=lf
 scripts/Remove-TeamsApp.ps1 text eol=lf
+docs/deployment.md text eol=lf
+scripts/Configure-Permissions.ps1 text eol=lf
+scripts/Review-Deliveries.ts text eol=lf

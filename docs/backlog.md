@@ -7,7 +7,7 @@
 - **Repository:** nathanmcnulty/azd-auth-notifications
 - **Source revision:** `c60ef82114cebd7885bed02a726140b21904f5a6`
 - **Captured:** 2026-10-04
-- **Items:** 10
+- **Items:** 11
 
 ## AUTH-001: Reconcile this backlog with current source and active work
 
@@ -57,7 +57,7 @@ Plans and implementation evidence are spread across files; the captured source c
 
 **Evidence:**
 
-- Reconciled the reviewed preservation tip 8254348637b7ca8b952ce49dfa98a071503fb934 against freshly fetched origin/main c60ef82114cebd7885bed02a726140b21904f5a6. The fresh main is the preservation merge&#39;s exact second parent, so its reviewed Graph retry changes were retained while the local-only retention, component-upgrade and operator-review packets were restored without copying the dirty canonical checkout.
+- Reconciled the reviewed preservation tip 8254348637b7ca8b952ce49dfa98a071503fb934 against freshly fetched origin/main c60ef82114cebd7885bed02a726140b21904f5a6. The fresh main is the exact second parent of the preservation merge, so its reviewed Graph retry changes were retained while the local-only retention, component-upgrade and operator-review packets were restored without copying the dirty canonical checkout.
 - Current source, six worktrees, active issue &num;9 and pull requests were inspected read-only on 2026-10-04&colon; no pull request is open, and issue &num;9 still tracks recipient-visible notification acceptance plus remaining roadmap work. AUTH-002, AUTH-003, AUTH-006, AUTH-007 and AUTH-008 therefore remain proposed; AUTH-004, AUTH-005, AUTH-009 and AUTH-010 retain their reviewed completion evidence.
 - Exact offline repository validation on the reconciled staged tree passed 55/55 tests, npm audit with zero findings, typecheck/build, Bicep compilation, managed-component drift, permission/backlog schemas, generated-backlog check and Git diff checks. The retained nine-assertion Azure Table proof applies only because its five proof-bound product files are byte-identical; no new cloud operation, notification delivery or human-receipt validation was performed.
 
@@ -113,6 +113,62 @@ Open report captured 2026-10-03 during execution reconciliation. Another code-qu
 **Review and authorization note:**
 
 Review AUTH-010 against the current repository state. Its status or authorization class is not eligible for an actionable generated handoff. Do not claim or execute it without explicit selection, satisfied dependencies, and every required authorization. Never interpret this generated view as approval.
+
+## AUTH-011: Complete the supported authoring and lifecycle test baseline
+
+- **Kind:** maintenance
+- **Priority:** P1
+- **Status:** done
+- **Wave:** 0
+- **Authorization:** local-only
+- **Blocker:** _none_
+- **Claim:** _none_
+
+**Problem:**
+
+Owned authoring entrypoints did not consistently declare PowerShell 7.6, while the lifecycle runner and Windows CI selected Pester 5.7.1.
+
+**Scope:**
+
+- Owned root PowerShell scripts/modules and current prerequisites
+- Windows CI verified runtime and lifecycle runner version selection
+- Contributor validation guidance and source-evidence byte policy
+
+**Acceptance:**
+
+- All owned root PowerShell entrypoints require 7.6+; local and CI lifecycle checks import exact Pester 6.2.0.
+- Preserve every existing lifecycle assertion, no-omission result gate and ownership/removal boundary.
+- Preserve runtime TypeScript, package locks, component/vendor bytes, notification semantics and the separate ACS-removal draft.
+
+**Validation:**
+
+- ./scripts/Test-Repository.ps1
+- Profile the actual Test-TeamsLifecycle.ps1 runner and record runtime, module and complete-result counts.
+- Parse PowerShell; verify canonical permission/backlog schemas, locked component hashes and generated backlog.
+- Check a fresh core.autocrlf=true index export against locked component and permission-source hashes.
+
+**Dependencies:**
+
+- _none_
+
+**Components:**
+
+- deployment-validation
+
+**Sources:**
+
+- https&colon;//github.com/nathanmcnulty/azd-auth-notifications/issues/17
+
+**Evidence:**
+
+- Rechecked current main a8578f8b1f99ca5760f8e470fc6b1169cf763187 and ACS-removal draft &num;16 at 0e265d77b8961de464a5af433f916113ef692cb1 before editing. AUTH-011 is unused in both backlogs. All 13 owned root PowerShell files now declare 7.6 &lpar;12 added guards&rpar;. Windows CI selects the previously reviewed official PowerShell 7.6.6 x64 ZIP with exact SHA-256 and uses exact Pester 6.2.0; the initial runner shell only bootstraps that archive.
+- The complete registered validator passes locally on PowerShell 7.6.6/.NET 10.0.12/Pester 6.2.0, Node 26.7.0/npm 11.19.0&colon; 21/21 lifecycle tests and 55/55 Node tests with zero failures or omissions, TypeScript typecheck/build, Bicep 0.42.1 compile and whitespace checks. A separate profiling invocation passes the same 21 tests in 11.39 seconds total runner wall time. The existing strict PassedCount=TotalCount, failed-block/container and NotRun checks remain byte-identical. CI retains Node 22 for its independent hosted proof.
+- Component locks and vendor bytes remain unchanged, including the immutable upstream deployment-validation 1.1.1 manifest minimum 7.2, explicitly classified as frozen metadata. Source-backed permission metadata changes only hashes after declarations/documentation; LF checkout rules stabilize all affected evidence sources. No tests, TypeScript behavior, permissions, package lock, infrastructure or ACS-removal branch changed. No live authentication, Graph/Azure operation, delivery, Teams installation or tenant cleanup ran; AUTH-002/006/007 live and sample gates remain open.
+- A fresh core.autocrlf=true index export matches every locked component and source-evidence SHA-256, including unchanged Review-Deliveries.ts; scoped LF policy changes no canonical source bytes. All lifecycle acceptance assertions and the existing complete-result gate are retained without a compatibility fallback.
+
+**Review and authorization note:**
+
+Review AUTH-011 against the current repository state. Its status or authorization class is not eligible for an actionable generated handoff. Do not claim or execute it without explicit selection, satisfied dependencies, and every required authorization. Never interpret this generated view as approval.
 
 ## AUTH-009: Adopt deployment-validation 1.1.1 with compatible existing reports
 
@@ -557,7 +613,7 @@ ACS is requested in the legacy roadmap but transport, destinations and operation
 
 **Evidence:**
 
-- The retirement assessment in docs/acs-transport-design.md reviewed Microsoft&#39;s official ACS retirement notice on 2026-10-15&colon; standalone ACS retirement is announced for 2028-09-30, with Email and SMS explicitly impacted and onboarding restrictions beginning 2026-10-23.
+- The retirement assessment in docs/acs-transport-design.md reviewed the official Microsoft ACS retirement notice on 2026-10-15&colon; standalone ACS retirement is announced for 2028-09-30, with Email and SMS explicitly impacted and onboarding restrictions beginning 2026-10-23.
 - No ACS dependency is added. Existing Graph email and Teams routes remain unchanged; no ACS resource, phone number, domain, role, Event Grid subscription, secret, authentication, provider request or recipient delivery was performed.
 - A replacement SMS provider has not been selected. Approved recipient authority, independent audience choices, stable logical-route deduplication and provider-attempt evidence remain required before a future provider can satisfy the original acceptance.
 

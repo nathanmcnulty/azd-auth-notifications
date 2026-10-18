@@ -27,12 +27,25 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install pinned PowerShell and Pester
+      - name: Select verified PowerShell 7.6.6
         shell: pwsh
         run: |
-          dotnet tool install --tool-path .tools/pwsh PowerShell --version 7.6.0
-          & .tools/pwsh/pwsh -NoLogo -NoProfile -Command 'Install-Module Pester -RequiredVersion 5.7.1 -Scope CurrentUser -Force'
+          $ErrorActionPreference = 'Stop'
+          $runtimeRoot = Join-Path $env:RUNNER_TEMP 'auth-notifications-powershell-7.6.6'
+          $archive = Join-Path $env:RUNNER_TEMP 'PowerShell-7.6.6-win-x64.zip'
+          Invoke-WebRequest -Uri 'https://github.com/PowerShell/PowerShell/releases/download/v7.6.6/PowerShell-7.6.6-win-x64.zip' -OutFile $archive
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -cne '02FE458BE20493FBDF43F61EA20610B811EE6C738AB1676C61B9CFCD1A33C860') {
+            throw 'PowerShell archive hash mismatch.'
+          }
+          Expand-Archive -LiteralPath $archive -DestinationPath $runtimeRoot -Force
+          $runtimeRoot >> $env:GITHUB_PATH
+      - name: Verify runtime and install Pester
+        shell: pwsh
+        run: |
+          if ($PSVersionTable.PSVersion -ne [version]'7.6.6' -or -not [Environment]::Is64BitProcess) {
+            throw "Expected 64-bit PowerShell 7.6.6; observed $($PSVersionTable.PSVersion)."
+          }
+          Install-Module Pester -RequiredVersion 6.2.0 -Scope CurrentUser -Force
       - name: Test Teams lifecycle
         shell: pwsh
-        run: |
-          & .tools/pwsh/pwsh -NoLogo -NoProfile -File scripts/Test-TeamsLifecycle.ps1
+        run: ./scripts/Test-TeamsLifecycle.ps1
