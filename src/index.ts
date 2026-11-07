@@ -10,10 +10,12 @@ import { collect, dispatch, type DispatchOutcome, type Job } from "./engine.js";
 import { AzureState } from "./state.js";
 import { Graph } from "./graph.js";
 import { ManagedIdentityTeamsBot } from "./bot.js";
+import { readBoundedJsonObject } from "./http-body.js";
 import {
   toNotificationDeliveryResult,
   toNotificationEnvelope,
 } from "./contracts.js";
+app.setup({ enableHttpStream: true });
 const config = parseConfig(process.env);
 const RETENTION_BATCH_LIMIT = 25;
 const state = new AzureState(
@@ -100,10 +102,7 @@ if (bot)
     route: "messages",
     methods: ["POST"],
     authLevel: "anonymous",
-    handler: async (request) => {
-      await state.init();
-      return bot.handle(request);
-    },
+    handler: (request) => bot.handle(request),
   });
 app.http("testDelivery", {
   route: "test-delivery",
@@ -120,12 +119,18 @@ app.http("testDelivery", {
         status: 400,
         jsonBody: { code: "TestDeliveryRequiresExplicitPilot" },
       };
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return { status: 400, jsonBody: { code: "TestDeliveryInvalidBody" } };
-    }
+    const parsed = await readBoundedJsonObject(request);
+    if (parsed.response)
+      return {
+        status: parsed.response.status,
+        jsonBody: {
+          code:
+            parsed.response.status === 413
+              ? "TestDeliveryBodyTooLarge"
+              : "TestDeliveryInvalidBody",
+        },
+      };
+    const body = parsed.body;
     const userId =
       typeof (body as { userId?: unknown })?.userId === "string"
         ? (body as { userId: string }).userId.toLowerCase()

@@ -28,6 +28,7 @@ try {
     Invoke-CheckedCommand -Command 'npm' -Arguments @('run', 'build')
     Invoke-CheckedCommand -Command 'az' -Arguments @('bicep', 'build', '--file', 'infra/main.bicep', '--stdout') -DiscardOutput
     Invoke-CheckedCommand -Command 'git' -Arguments @('diff', '--check')
+    Invoke-CheckedCommand -Command 'npm' -Arguments @('audit', '--omit=dev', '--audit-level=high')
 }
 finally {
     Pop-Location
