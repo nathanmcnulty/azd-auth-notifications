@@ -12,6 +12,10 @@ The anonymous Teams route initializes storage only inside the SDK-authenticated 
 
 Repository and hosted runtime validation include a production dependency audit that fails for high or critical findings. Passing functional tests does not waive that gate.
 
+## Personal Teams conversation references
+
+Authenticated capture rejects conflicting conversation tenant IDs, group flags and incomplete routing fields. Valid references retain the normalized tenant and owner in the SDK's standard `conversation.tenantId` and `user.aadObjectId` fields. Proactive sends require the configured tenant, `msteams` channel, personal conversation and requested owner to match the stored reference. Legacy or incomplete rows remain stored but are unavailable for delivery until a normal authenticated personal activity refreshes them. Do not fill missing scope fields from configuration to adopt an old row. The runtime does not migrate references or reinstall the bot automatically.
+
 ## Delivery state
 
 AuthNotifications table partitions by tenant. Delivery identity is audit ID, channel, and recipient ID. ETag claiming prevents concurrent dispatch. Canonical passkey selection suppresses the observed generic pair; all passkey variants are not yet verified.
