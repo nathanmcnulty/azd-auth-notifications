@@ -21,6 +21,7 @@ jobs:
       - run: npm run build
       - run: az bicep build --file infra/main.bicep --stdout > /dev/null
       - run: git diff --check
+      - run: npm audit --omit=dev --audit-level=high
   powershell:
     name: PowerShell 7.6 lifecycle
     runs-on: windows-latest

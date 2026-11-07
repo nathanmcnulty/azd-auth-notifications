@@ -1,4 +1,5 @@
 import type { HttpRequest, HttpResponseInit } from "@azure/functions";
+import { readBoundedJsonObject } from "./http-body.js";
 import {
   CloudAdapter,
   ConfigurationBotFrameworkAuthentication,
@@ -6,6 +7,7 @@ import {
   type ConversationReference,
 } from "botbuilder";
 interface ConversationRepository {
+  init(): Promise<void>;
   getConversation(id: string): Promise<unknown>;
   putConversation(id: string, reference: unknown): Promise<void>;
   deleteConversation(id: string): Promise<void>;
@@ -132,7 +134,9 @@ export class ManagedIdentityTeamsBot {
   }
 
   async handle(request: HttpRequest): Promise<HttpResponseInit> {
-    const body = (await request.json()) as Record<string, unknown>;
+    const parsed = await readBoundedJsonObject(request);
+    if (parsed.response) return parsed.response;
+    const body = parsed.body;
     const response: WebResponseCapture = {
       statusCode: 200,
       headers: {},
@@ -171,6 +175,7 @@ export class ManagedIdentityTeamsBot {
         return;
       const ownerObjectId = normalizedUuid(context.activity.from?.aadObjectId);
       if (ownerObjectId) {
+        await this.conversations.init();
         const installationAction = (context.activity as { action?: string })
           .action;
         if (

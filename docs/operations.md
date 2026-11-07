@@ -4,6 +4,14 @@ The timer dispatches pending records, then collects registrations every five min
 
 First activation establishes a boundary without importing historical registrations. Subsequent reads overlap by 60 minutes (configurable). Failed reads do not advance progress. Events arriving beyond the overlap may be missed. Downtime beyond Entra audit retention cannot be recovered. Pausing preserves the checkpoint, so resuming catches up within available retention.
 
+## HTTP input boundary
+
+The Teams and test-delivery routes accept JSON objects up to 256 KiB. A streaming reader counts actual bytes before JSON parsing and Bot Framework processing, including requests with missing or understated Content-Length. Oversized bodies return 413; malformed or non-object JSON returns 400. Test delivery preserves `TestDeliveryInvalidBody` and uses `TestDeliveryBodyTooLarge` for oversized input. The Azure host uses the matching `FUNCTIONS_REQUEST_BODY_SIZE_LIMIT=262144` setting.
+
+The anonymous Teams route initializes storage only inside the SDK-authenticated callback, after validating the configured tenant, personal Teams conversation and owner object ID. Rejected input and authentication failures do not initialize the table. This limits ingress allocation and pre-authentication storage work; it does not resolve the remaining Zod dependency advisory or establish native recipient delivery. See [Azure Functions HTTP streaming](https://learn.microsoft.com/azure/azure-functions/node-http-stream) for the streaming and host-limit settings.
+
+Repository and hosted runtime validation include a production dependency audit that fails for high or critical findings. Passing functional tests does not waive that gate.
+
 ## Delivery state
 
 AuthNotifications table partitions by tenant. Delivery identity is audit ID, channel, and recipient ID. ETag claiming prevents concurrent dispatch. Canonical passkey selection suppresses the observed generic pair; all passkey variants are not yet verified.
