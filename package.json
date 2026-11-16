@@ -15,7 +15,8 @@
     "@azure/data-tables": "^13.3.0",
     "@azure/functions": "^4.7.2",
     "@azure/identity": "^4.14.1",
-    "botbuilder": "^4.23.3"
+    "@microsoft/teams.api": "2.2.1",
+    "@microsoft/teams.apps": "2.2.1"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",
