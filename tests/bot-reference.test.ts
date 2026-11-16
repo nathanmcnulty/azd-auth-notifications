@@ -1,22 +1,31 @@
 import assert from "node:assert/strict";
-import test, { afterEach, mock } from "node:test";
+import test from "node:test";
 import azureFunctions from "@azure/functions";
-import { CloudAdapter, type Activity, type TurnContext } from "botbuilder";
 import { ManagedIdentityTeamsBot } from "../src/bot.js";
-const { HttpRequest } = azureFunctions;
-const initializesStorage = true;
-afterEach(() => mock.restoreAll());
-function patchProcess(fn: (...args: unknown[]) => Promise<void>) {
-  mock.method(CloudAdapter.prototype, "process", fn);
-}
-function patchContinue(fn: (...args: unknown[]) => Promise<void>) {
-  mock.method(CloudAdapter.prototype, "continueConversationAsync", fn);
-}
+import { createTestTeamsApp } from "./teams-app-fixture.js";
 
+const { HttpRequest } = azureFunctions;
 const tenant = "11111111-1111-4111-8111-111111111111";
 const owner = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const foreign = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
-function activity(): Partial<Activity> {
+interface TestActivity {
+  type: string;
+  action?: string;
+  channelId: string;
+  channelData: { tenant: { id: string } };
+  from: { id: string; name: string; aadObjectId?: string };
+  recipient: { id: string; name: string };
+  conversation: {
+    id: string;
+    name: string;
+    isGroup?: boolean;
+    conversationType: string;
+    tenantId?: string;
+  };
+  serviceUrl: string;
+}
+
+function activity(): TestActivity {
   return {
     type: "installationUpdate",
     channelId: "msteams",
@@ -36,6 +45,7 @@ function activity(): Partial<Activity> {
     serviceUrl: "https://example.invalid",
   };
 }
+
 function reference() {
   return {
     channelId: "msteams",
@@ -50,6 +60,7 @@ function reference() {
     bot: { id: "fixture-bot" },
   };
 }
+
 function fixture(initial?: unknown) {
   let stored = initial;
   const calls: string[] = [];
@@ -73,34 +84,36 @@ function fixture(initial?: unknown) {
       writtenOwners.push(id);
     },
   };
+  const sdk = createTestTeamsApp();
   const bot = new ManagedIdentityTeamsBot(
     "33333333-3333-4333-8333-333333333333",
     tenant,
     repository,
     { error() {} },
+    sdk.app,
   );
-  return { bot, calls, reads, writtenOwners, stored: () => stored };
+  return { bot, calls, reads, writtenOwners, stored: () => stored, sdk };
 }
-function input(message: Partial<Activity>) {
+
+function input(message: TestActivity) {
   return new HttpRequest({
     url: "https://example.invalid/messages",
     method: "POST",
     body: { string: JSON.stringify(message) },
   });
 }
-function authenticate(message: Partial<Activity>) {
-  patchProcess(async (...args: unknown[]) => {
-    await (args[2] as (context: TurnContext) => Promise<void>)({
-      activity: message,
-    } as TurnContext);
-  });
-}
-test("real SDK unsigned activity cannot touch conversation storage", async () => {
+
+test("personal installation capture stores a scoped native SDK reference", async () => {
   const f = fixture();
-  assert.equal((await f.bot.handle(input(activity()))).status, 401);
-  assert.deepEqual(f.calls, []);
-  assert.deepEqual(f.reads, []);
+  assert.equal((await f.bot.handle(input(activity()))).status, 200);
+  const stored = f.stored() as ReturnType<typeof reference>;
+  assert.equal(stored.conversation.tenantId, tenant);
+  assert.equal(stored.user.aadObjectId, owner);
+  assert.equal(stored.conversation.id, "fixture-conversation");
+  assert.deepEqual(f.calls, ["init", "put"]);
+  assert.equal(f.sdk.initializationCalls, 1);
 });
+
 for (const scope of [
   "foreign-tenant",
   "foreign-channel",
@@ -119,63 +132,58 @@ for (const scope of [
     if (scope === "foreign-tenant")
       message.channelData = { tenant: { id: foreign } };
     if (scope === "foreign-channel") message.channelId = "directline";
-    if (scope === "group") message.conversation!.conversationType = "groupChat";
-    if (scope === "contradictory-group") message.conversation!.isGroup = true;
-    if (scope === "missing-owner") delete message.from!.aadObjectId;
-    if (scope === "malformed-owner") message.from!.aadObjectId = "invalid";
+    if (scope === "group") message.conversation.conversationType = "groupChat";
+    if (scope === "contradictory-group") message.conversation.isGroup = true;
+    if (scope === "missing-owner") delete message.from.aadObjectId;
+    if (scope === "malformed-owner") message.from.aadObjectId = "invalid";
     if (scope === "conversation-tenant-mismatch")
-      message.conversation!.tenantId = foreign;
+      message.conversation.tenantId = foreign;
     if (scope === "conversation-tenant-malformed")
-      message.conversation!.tenantId = "invalid";
-    if (scope === "missing-conversation-id") message.conversation!.id = "";
-    if (scope === "missing-user-id") message.from!.id = "";
+      message.conversation.tenantId = "invalid";
+    if (scope === "missing-conversation-id") message.conversation.id = "";
+    if (scope === "missing-user-id") message.from.id = "";
     if (scope === "missing-service-url") message.serviceUrl = "";
-    authenticate(message);
     const f = fixture();
     assert.equal((await f.bot.handle(input(message))).status, 200);
     assert.deepEqual(f.calls, []);
     assert.deepEqual(f.reads, []);
   });
 }
+
 for (const valid of [true, false]) {
   test(`personal installation removal requires matching scope: ${valid}`, async () => {
     const message = { ...activity(), action: "remove" };
     if (!valid) message.channelData = { tenant: { id: foreign } };
-    authenticate(message);
     const f = fixture();
     await f.bot.handle(input(message));
-    assert.deepEqual(
-      f.calls,
-      valid ? (initializesStorage ? ["init", "delete"] : ["delete"]) : [],
-    );
+    assert.deepEqual(f.calls, valid ? ["init", "delete"] : []);
     assert.deepEqual(f.writtenOwners, valid ? [owner] : []);
   });
 }
-test("SDK reference capture round-trips into one simulated proactive send", async () => {
-  const message = activity();
-  authenticate(message);
+
+test("captured reference sends an Adaptive Card to its conversation ID", async () => {
   const f = fixture();
-  await f.bot.handle(input(message));
-  const stored = f.stored() as ReturnType<typeof reference>;
-  assert.equal(stored.conversation.tenantId, tenant);
-  assert.equal(stored.user.aadObjectId, owner);
-  assert.deepEqual(f.calls, initializesStorage ? ["init", "put"] : ["put"]);
-  let continued = 0;
-  let sent = 0;
-  patchContinue(async (...args: unknown[]) => {
-    continued++;
-    assert.equal(args[1], stored);
-    await (args[2] as (context: TurnContext) => Promise<void>)({
-      sendActivity: async () => {
-        sent++;
-      },
-    } as unknown as TurnContext);
+  await f.bot.handle(input(activity()));
+  await f.bot.sendToEntraUser(owner.toUpperCase(), {
+    type: "AdaptiveCard",
+    version: "1.5",
+    body: [],
   });
-  await f.bot.sendToEntraUser(owner.toUpperCase(), { type: "AdaptiveCard" });
   assert.deepEqual(f.reads, [owner]);
-  assert.equal(continued, 1);
-  assert.equal(sent, 1);
+  assert.equal(f.sdk.sent.length, 1);
+  assert.equal(f.sdk.sent[0].conversationId, "fixture-conversation");
+  assert.equal(f.sdk.sent[0].serviceUrl, "https://example.invalid");
+  assert.deepEqual(JSON.parse(JSON.stringify(f.sdk.sent[0].activity)), {
+    type: "message",
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        content: { type: "AdaptiveCard", version: "1.5", body: [] },
+      },
+    ],
+  });
 });
+
 for (const scope of [
   "missing",
   "legacy-no-tenant",
@@ -204,19 +212,17 @@ for (const scope of [
     if (scope === "malformed-id")
       (stored.conversation as unknown as { id: unknown }).id = 42;
     const f = fixture(scope === "missing" ? undefined : stored);
-    let continued = 0;
-    patchContinue(async () => {
-      continued++;
-    });
     await assert.rejects(f.bot.sendToEntraUser(owner, {}));
-    assert.equal(continued, 0);
+    assert.equal(f.sdk.sent.length, 0);
     assert.deepEqual(f.calls, []);
     if (scope !== "missing") assert.equal(f.stored(), stored);
   });
 }
+
 test("malformed requested owner is refused before a storage read", async () => {
   const f = fixture(reference());
   await assert.rejects(f.bot.sendToEntraUser("invalid", {}));
   assert.deepEqual(f.reads, []);
   assert.deepEqual(f.calls, []);
+  assert.equal(f.sdk.sent.length, 0);
 });

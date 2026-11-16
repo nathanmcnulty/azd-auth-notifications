@@ -1,14 +1,29 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import azureFunctions from "@azure/functions";
-const { HttpRequest } = azureFunctions;
-import { CloudAdapter, type Activity, type TurnContext } from "botbuilder";
 import { ManagedIdentityTeamsBot } from "../src/bot.js";
 import { MAX_HTTP_BODY_BYTES } from "../src/http-body.js";
+import { createTestTeamsApp } from "./teams-app-fixture.js";
 
+const { HttpRequest } = azureFunctions;
 const tenant = "11111111-1111-4111-8111-111111111111";
 const owner = "22222222-2222-4222-8222-222222222222";
-function fixture() {
+interface TestActivity {
+  type: string;
+  channelId: string;
+  channelData: { tenant: { id: string } };
+  from: { id: string; name: string; aadObjectId?: string };
+  conversation: {
+    id: string;
+    conversationType: string;
+    isGroup?: boolean;
+    name: string;
+  };
+  recipient: { id: string; name: string };
+  serviceUrl: string;
+}
+
+function fixture(realSdk = false) {
   const calls: string[] = [];
   const repository = {
     async init() {
@@ -25,14 +40,17 @@ function fixture() {
       calls.push("delete");
     },
   };
+  const sdk = realSdk ? undefined : createTestTeamsApp();
   const bot = new ManagedIdentityTeamsBot(
     "33333333-3333-4333-8333-333333333333",
     tenant,
     repository,
     { error() {} },
+    sdk?.app,
   );
-  return { bot, calls };
+  return { bot, calls, sdk };
 }
+
 function request(text: string) {
   return new HttpRequest({
     url: "https://example.invalid/messages",
@@ -40,7 +58,8 @@ function request(text: string) {
     body: { string: text },
   });
 }
-const activity = (): Partial<Activity> => ({
+
+const activity = (): TestActivity => ({
   type: "installationUpdate",
   channelId: "msteams",
   channelData: { tenant: { id: tenant } },
@@ -60,63 +79,33 @@ for (const [status, body] of [
   [400, "{"],
   [400, "null"],
 ] as const) {
-  test(`rejects ${status} input before SDK or table initialization`, async (t) => {
-    let sdkCalls = 0;
-    t.mock.method(CloudAdapter.prototype, "process", async () => {
-      sdkCalls++;
-    });
-    const { bot, calls } = fixture();
+  test(`rejects ${status} input before SDK or table initialization`, async () => {
+    const { bot, calls, sdk } = fixture();
     assert.equal((await bot.handle(request(body))).status, status);
-    assert.equal(sdkCalls, 0);
+    assert.equal(sdk?.requestCalls, 0);
+    assert.equal(sdk?.initializationCalls, 0);
     assert.deepEqual(calls, []);
   });
 }
 
-test("the real SDK rejects an unsigned activity without table initialization", async () => {
-  const { bot, calls } = fixture();
+test("the real Teams SDK rejects an unsigned activity before storage access", async () => {
+  const { bot, calls } = fixture(true);
   const response = await bot.handle(request(JSON.stringify(activity())));
   assert.equal(response.status, 401);
   assert.deepEqual(calls, []);
 });
 
-for (const scope of [
-  "valid",
-  "foreign-tenant",
-  "group",
-  "foreign-channel",
-  "missing-owner",
-  "remove",
-]) {
-  test(`authenticated callback preserves conversation scope: ${scope}`, async (t) => {
-    const message = activity();
-    if (scope === "foreign-tenant")
-      message.channelData = { tenant: { id: owner } };
-    if (scope === "group") message.conversation!.conversationType = "groupChat";
-    if (scope === "foreign-channel") message.channelId = "directline";
-    if (scope === "missing-owner")
-      message.from = { id: "fixture-user", name: "fixture" };
-    if (scope === "remove") (message as { action?: string }).action = "remove";
-    t.mock.method(
-      CloudAdapter.prototype,
-      "process",
-      async (...args: unknown[]) => {
-        await (args[2] as (context: TurnContext) => Promise<void>)({
-          activity: message,
-        } as TurnContext);
-      },
-    );
-    const { bot, calls } = fixture();
-    assert.equal(
-      (await bot.handle(request(JSON.stringify(message)))).status,
-      200,
-    );
-    assert.deepEqual(
-      calls,
-      scope === "valid"
-        ? ["init", "put"]
-        : scope === "remove"
-          ? ["init", "delete"]
-          : [],
-    );
-  });
-}
+test("explicit false keeps SDK authentication enabled despite environment opt-out", async () => {
+  const previous = process.env.DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS;
+  process.env.DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS = "true";
+  try {
+    const { bot, calls } = fixture(true);
+    const response = await bot.handle(request(JSON.stringify(activity())));
+    assert.equal(response.status, 401);
+    assert.deepEqual(calls, []);
+  } finally {
+    if (previous === undefined)
+      delete process.env.DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS;
+    else process.env.DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS = previous;
+  }
+});
